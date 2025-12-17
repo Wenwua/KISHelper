@@ -51,8 +51,12 @@ namespace KISHelper.ViewModels.Settings
                     MessageBox.Show($"核算维度 '{dialog.DimensionType}'：'{dialog.DimensionName}' 已存在！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
-
-                AccDimension.Add(new AccDimension { DimensionType= dialog.DimensionType, DimensionName = dialog.DimensionName, DimensionNumber = dialog.DimensionNumber,AccID = dialog.AccID });
+                AccDimension.Add(new AccDimension { 
+                    DimensionType= dialog.DimensionType, 
+                    DimensionName = dialog.DimensionName, 
+                    DimensionNumber = dialog.DimensionNumber,
+                    AccID = dialog.AccID,
+                    BankDimension=dialog.BankDimension});
                 SaveAllData();
             }
         }
@@ -60,23 +64,29 @@ namespace KISHelper.ViewModels.Settings
         private void ExecuteEditDimension(AccDimension accDimension)
         {
             if (accDimension == null) return;
-            var dialog = new DimensionDialog("编辑", accDimension.DimensionType, accDimension.DimensionName, accDimension.DimensionNumber, accDimension.AccID);
+            var dialog = new DimensionDialog("编辑", accDimension.DimensionType, accDimension.DimensionName, accDimension.DimensionNumber, accDimension.AccID,accDimension.BankDimension);
             dialog.Owner = Application.Current.MainWindow;
             if (dialog.ShowDialog() == true)
             {
+                var result = AccDimension
+                    .Where(a => a.DimensionType == dialog.DimensionType && a.DimensionName == dialog.DimensionName).ToList();
                 // 如果AccName改了，检查是否与其他冲突
-                if (AccDimension.Any(a =>
-                    a.DimensionType == dialog.DimensionType &&
-                    a.DimensionName == dialog.DimensionName))
+                if (result.Any())
                 {
-                    MessageBox.Show($"核算项目 {dialog.DimensionType}'：'{dialog.DimensionName}' 已存在！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
+                    result[0].DimensionType = dialog.DimensionType;
+                    result[0].DimensionName = dialog.DimensionName;
+                    result[0].DimensionNumber = dialog.DimensionNumber;
+                    result[0].AccID = dialog.AccID;
+                    result[0].BankDimension = dialog.BankDimension;
                 }
-
-                accDimension.DimensionType = dialog.DimensionType;
-                accDimension.DimensionName = dialog.DimensionName;
-                accDimension.DimensionNumber = dialog.DimensionNumber;
-                accDimension.AccID = dialog.AccID;
+                else
+                {
+                    accDimension.DimensionType = dialog.DimensionType;
+                    accDimension.DimensionName = dialog.DimensionName;
+                    accDimension.DimensionNumber = dialog.DimensionNumber;
+                    accDimension.AccID = dialog.AccID;
+                    accDimension.BankDimension = dialog.BankDimension;
+                }
                 SaveAllData();
             }
         }

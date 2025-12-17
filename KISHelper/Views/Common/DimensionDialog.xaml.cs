@@ -23,7 +23,8 @@ namespace KISHelper.Views.Common
         public string DimensionName { get; set; }
         public string DimensionNumber { get; set; }
         public string AccID { get; set; }
-        public DimensionDialog(string title, string dimensionType = "", string dimensionName = "", string dimensionNumber = "", string accID = "")
+        public string BankDimension { get; set; }
+        public DimensionDialog(string title, string dimensionType = "", string dimensionName = "", string dimensionNumber = "", string accID = "",string bankDimension = "")
         {
             InitializeComponent();
             Title = title;
@@ -31,6 +32,7 @@ namespace KISHelper.Views.Common
             DimensionName = dimensionName;
             DimensionNumber = dimensionNumber;
             AccID = accID;
+            BankDimension = bankDimension;
             DataContext = this;
             TypeBox.Focus();
         }
@@ -49,8 +51,7 @@ namespace KISHelper.Views.Common
             }
             if (string.IsNullOrWhiteSpace(DimensionNumber))
             {
-                MessageBox.Show("维度编码不能为空！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+                MessageBox.Show("维度编码未设置！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             DialogResult = true;
             Close();

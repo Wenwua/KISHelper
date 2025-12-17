@@ -326,11 +326,16 @@ namespace KISHelper.ViewModels
                 Path.Combine(_filePath, "引入数据.xlsx"),
                 "凭证#单据头(FBillHead)");
 
-            MessageBox.Show($"已导出文件：{_filePath}\\引入数据.xlsx");
+            
 
-            SaveBills.Clear();
-            ExportEntity.Clear();
-            _count = 1;
+            if (NpoiHelper.IsExported) 
+            {
+                SaveBills.Clear();
+                ExportEntity.Clear();
+                _count = 1;
+                MessageBox.Show($"已导出文件：{_filePath}\\引入数据.xlsx");
+            }
+            
         }
     }
 }

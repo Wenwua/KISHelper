@@ -52,7 +52,12 @@ namespace KISHelper.ViewModels.Settings
                     return;
                 }
 
-                AccRules.Add(new AccRule { AccName = dialog.AccName, AccountID = dialog.AccountID, AccFDC=dialog.AccFDC,AccFiexItem=dialog.AccFiexItem });
+                AccRules.Add(new AccRule { 
+                    AccName = dialog.AccName, 
+                    AccountID = dialog.AccountID, 
+                    AccFDC=dialog.AccFDC,
+                    AccFiexItem=dialog.AccFiexItem,
+                    DefaultDetailID_FFlex5=dialog.DefaultDetailID_FFlex5 });
                 SaveAllData();
             }
         }
@@ -75,6 +80,7 @@ namespace KISHelper.ViewModels.Settings
                 accRule.AccountID= dialog.AccountID;
                 accRule.AccFDC= dialog.AccFDC;
                 accRule.AccFiexItem= dialog.AccFiexItem;
+                accRule.DefaultDetailID_FFlex5 = dialog.DefaultDetailID_FFlex5;
                 SaveAllData();
             }
         }

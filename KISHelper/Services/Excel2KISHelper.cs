@@ -34,7 +34,7 @@ namespace KISHelper.Services
             int iStart=1;
             string KeyStr,BankName=string.Empty, AccFiexItem=string.Empty, 
                 DetailID_FFlex6=string.Empty,DetailID_FFlex5 = string.Empty, 
-                DetailID_FFlex4=string.Empty,BankAccID = string.Empty;
+                DetailID_FFlex4=string.Empty,BankAccID = string.Empty,BankDimension = string.Empty;
 
             //查询银行信息
             var bankResult = accDimensions
@@ -42,12 +42,14 @@ namespace KISHelper.Services
                     .Select(b => new
                     {
                         b.AccID,
-                        b.DimensionName
+                        b.DimensionName,
+                        b.BankDimension
                     }).ToList();
             if (bankResult.Any())
             {
                 BankName = bankResult[0].DimensionName;
                 BankAccID= bankResult[0].AccID;
+                BankDimension = bankResult[0].BankDimension;
             }
 
             foreach (var item in billInfo)
@@ -113,6 +115,11 @@ namespace KISHelper.Services
                 {
                     item.AccNumber = "凭证号：" + item.AccNumber;
                 }
+                //如果核算类型已经有了收、付的关键字，就不要在摘要里写收付字样了
+                if (item.AccType.StartsWith("收") || item.AccType.StartsWith("付"))
+                {
+                    KeyStr = string.Empty;
+                }
                 entity.FEXPLANATION = BankName + KeyStr+item.DetailID_FFlex5+item.DetailID_FFlex6+item.AccType+item.AccNumber;
 
 
@@ -143,7 +150,7 @@ namespace KISHelper.Services
                 //部门
                 if (AccFiexItem.Contains("部门"))
                 {
-                    //如果核算维度有客户维度，判断客户字段是否为空，空值则按零星客户核算
+                    //如果核算维度有部门维度，判断部门字段是否为空，空值则按归集客户核算
                     if (string.IsNullOrWhiteSpace(item.DetailID_FFlex5))
                     {
                         DetailID_FFlex5 = "归集部门";
@@ -166,7 +173,7 @@ namespace KISHelper.Services
                 //供应商
                 if (AccFiexItem.Contains("供应商"))
                 {
-                    //如果核算维度有客户维度，判断客户字段是否为空，空值则按零星客户核算
+                    
                     if (string.IsNullOrWhiteSpace(item.DetailID_FFlex4))
                     {
                         DetailID_FFlex4 = "零星供应商";
@@ -206,7 +213,14 @@ namespace KISHelper.Services
             TotalEntity.FEntity = irow.ToString();
             TotalEntity.FEXPLANATION = BankName+ AccDate.ToString("yyyy/MM/dd") +"收支明细";
             TotalEntity.FAccountID = BankAccID;
-            TotalEntity.FDetailID_FF100009 = BankId;
+
+            //判断现金账户核算维度
+
+            if (BankDimension.Contains("银行账号")) { TotalEntity.FDetailID_FF100009 = BankId; }
+            if (BankDimension.Contains("客户")) { TotalEntity.FDetailID_FFlex6 = BankId; }
+            if (BankDimension.Contains("部门")) { TotalEntity.FDetailID_FFlex5 = BankId; }
+            if (BankDimension.Contains("供应商")) { TotalEntity.FDetailID_FFlex4 = BankId; }
+
             TotalEntity.FCURRENCYID = "PRE001";
             TotalEntity.FEXCHANGERATETYPE = "HLTX01_SYS";
             TotalEntity.FAMOUNTFOR = Math.Abs(DEBITTotal - CREDITTotal).ToString();

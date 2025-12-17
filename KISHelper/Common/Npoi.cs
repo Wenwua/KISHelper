@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace KISHelper.Common
 {
@@ -104,15 +105,17 @@ namespace KISHelper.Common
                     {
                         workbook.Write(fs);
                     }
+                    IsExported = true;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-
-                    return;
+                    MessageBox.Show(ex.Message);
+                    IsExported = false;
                 }
 
             }
 
+            public static bool IsExported;
             // ========= 私有辅助方法 =========
 
             private static IWorkbook GetWorkbook(Stream stream, string filePath)

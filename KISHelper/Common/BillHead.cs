@@ -50,6 +50,7 @@ namespace KISHelper.Common
         private string? accountID;
         private string? accFDC;
         private string? accFiexItem;
+        private string? defaultDetailID_FFlex5;
 
         //名称
         [ExcelColumn("名称", Order = 1)]
@@ -82,6 +83,14 @@ namespace KISHelper.Common
             get => accFiexItem;
             set => SetField(ref accFiexItem, value);
         }
+
+        //核算维度
+        [ExcelColumn("默认部门", Order = 5)]
+        public string? DefaultDetailID_FFlex5
+        {
+            get => defaultDetailID_FFlex5;
+            set => SetField(ref defaultDetailID_FFlex5, value);
+        }
     }
 
     public class AccDimension : ViewModelBase
@@ -90,6 +99,7 @@ namespace KISHelper.Common
         private string? dimensionName;
         private string? dimensionNumber;
         private string? accId;
+        private string? bankDimension;
 
         //维度类型
         [ExcelColumn("维度类型", Order = 1)]
@@ -122,6 +132,15 @@ namespace KISHelper.Common
         {
             get => accId;
             set => SetField(ref accId, value);
+        }
+
+        //核算维度---只有银行账号需要指定维度
+        [ExcelColumn("银行维度", Order = 5)]
+        public string? BankDimension
+
+        {
+            get => bankDimension;
+            set => SetField(ref bankDimension, value);
         }
     }
 }

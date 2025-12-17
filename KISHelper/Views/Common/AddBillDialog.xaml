@@ -9,11 +9,13 @@
         Title="AddBillDialog" SizeToContent="WidthAndHeight">
     <StackPanel Margin="15">
         <TextBlock Text="核算类型:" Margin="0,0,0,5"/>
-        <ComboBox ItemsSource="{Binding AccRules}" MinWidth="250" Margin="0,0,0,10" DisplayMemberPath="AccName" SelectedValuePath="AccName" SelectedValue="{Binding AccType}"/>
+        <ComboBox ItemsSource="{Binding AccRules}" MinWidth="250" Margin="0,0,0,10" DisplayMemberPath="AccName" SelectedItem="{Binding SelectedAccRule}"/>
         <TextBlock Text="部门:" Margin="0,0,0,5"/>
-        <ComboBox ItemsSource="{Binding DpmList}" MinWidth="250" Margin="0,0,0,10" DisplayMemberPath="DimensionName" SelectedValuePath="DimensionName" SelectedValue="{Binding DetailID_FFlex5}"/>
+        <ComboBox ItemsSource="{Binding DpmList}" MinWidth="250" Margin="0,0,0,10" DisplayMemberPath="DimensionName" 
+                  SelectedValuePath="DimensionName" SelectedValue="{Binding DetailID_FFlex5,Mode=TwoWay}" IsEnabled="{Binding AllowDetailID_FFlex5}"/>
         <TextBlock Text="客户:" Margin="0,0,0,5"/>
-        <ComboBox ItemsSource="{Binding CustomList}" MinWidth="250" Margin="0,0,0,10" DisplayMemberPath="DimensionName" SelectedValuePath="DimensionName" SelectedValue="{Binding DetailID_FFlex6}"/>
+        <ComboBox ItemsSource="{Binding CustomList}" MinWidth="250" Margin="0,0,0,10" DisplayMemberPath="DimensionName" 
+                  SelectedValuePath="DimensionName" SelectedValue="{Binding DetailID_FFlex6}"  IsEnabled="{Binding AllowDetailID_FFlex6}"/>
         <TextBlock Text="金额:" Margin="0,0,0,5"/>
         <TextBox Text="{Binding AMOUNT}" MinWidth="250" Margin="0,0,0,10" Height="22"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10">

@@ -27,7 +27,8 @@
                         <DataGridTextColumn Header="核算项目" Binding="{Binding AccName, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
                         <DataGridTextColumn Header="科目编码" Binding="{Binding AccountID, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
                         <DataGridTextColumn Header="余额方向" Binding="{Binding AccFDC, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
-                        <DataGridTextColumn Header="核算你维度" Binding="{Binding AccFiexItem, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
+                        <DataGridTextColumn Header="核算维度" Binding="{Binding AccFiexItem, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
+                        <DataGridTextColumn Header="默认部门" Binding="{Binding DefaultDetailID_FFlex5, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
                         <!-- 操作列 -->
                         <DataGridTemplateColumn Header="操作" Width="*" >
                             <DataGridTemplateColumn.CellTemplate>
