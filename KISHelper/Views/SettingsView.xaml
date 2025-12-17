@@ -1,0 +1,38 @@
+﻿<UserControl x:Class="KISHelper.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:vm="clr-namespace:KISHelper.ViewModels"
+             xmlns:vms="clr-namespace:KISHelper.ViewModels.Settings"
+             xmlns:views="clr-namespace:KISHelper.Views.Settings"
+             xmlns:local="clr-namespace:KISHelper.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="160"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0">
+            <Button Height="60" Content="基础信息设置" Style="{StaticResource BaseButtonStyle}" Command="{Binding NavigateCommand}" CommandParameter="BasicInformationSetting" />
+            <Button Height="60" Content="核算规则设置" Style="{StaticResource BaseButtonStyle}" Command="{Binding NavigateCommand}" CommandParameter="AccountingRulesSetting" />
+            <Button Height="60" Content="核算维度设置" Style="{StaticResource BaseButtonStyle}" Command="{Binding NavigateCommand}" CommandParameter="AccountingDimensionSetting" />
+        </StackPanel>
+
+        <ContentControl Grid.Column="1" Content="{Binding Navigator.CurrentView}" Margin="10,0,0,0">
+            <ContentControl.Resources>
+                <DataTemplate DataType="{x:Type vms:BasicInformationSettingViewModel }">
+                    <views:BasicInformationSetting/>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type vms:AccountingRulesSettingViewModel }">
+                    <views:AccountingRulesSetting/>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type vms:AccountingDimensionSettingViewModel }">
+                    <views:AccountingDimensionSetting/>
+                </DataTemplate>
+            </ContentControl.Resources>
+        </ContentControl>
+    </Grid>
+</UserControl>
