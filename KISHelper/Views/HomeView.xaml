@@ -30,7 +30,7 @@
                 <StackPanel Margin="5,10" VerticalAlignment="Center" HorizontalAlignment="Left" Orientation="Horizontal">
                     <TextBlock Text="核算组织" VerticalAlignment="Center" Margin="5,0"/>
                     <ComboBox  Margin="5,0,20,0" Width="250" ItemsSource="{Binding AccountBooks}" DisplayMemberPath="Name" 
-                               SelectedValuePath="Id" SelectedValue="{Binding BookId}"/>
+                               SelectedItem="{Binding BookSelected}"/>
                     <TextBlock Text="记账日期" VerticalAlignment="Center" Margin="5,0"/>
                     <DatePicker FontSize="12" Margin="5,0,10,0" Width="200" SelectedDate="{Binding AccDate}" SelectedDateFormat="Short" />
                 </StackPanel>
@@ -38,10 +38,10 @@
                 <StackPanel Grid.Row="1" Margin="5,10" VerticalAlignment="Center" HorizontalAlignment="Left" Orientation="Horizontal">
                     <TextBlock Text="凭证字" VerticalAlignment="Center" Margin="5,0"/>
                     <ComboBox  Margin="5,0,20,0" Width="80" ItemsSource="{Binding VoucherGroups}" DisplayMemberPath="Name" 
-                               SelectedValuePath="Id" SelectedValue="{Binding VoucherId}"/>
+                               SelectedItem="{Binding VoucherSelected}"/>
                     <TextBlock Text="账号" VerticalAlignment="Center" Margin="5,0"/>
                     <ComboBox  Margin="5,0,10,0" Width="120" ItemsSource="{Binding BankList}" DisplayMemberPath="DimensionName" 
-                               SelectedValuePath="DimensionNumber" SelectedValue="{Binding BankId}"/>
+                               SelectedItem="{Binding BankSelected}"/>
                     <Button Content="查询" Width="60" Margin="40,0,10,0" Command="{Binding FilterCommand}"/>
                     <Button Content="保存" Width="60" Margin="10,0" Command="{Binding SaveBillCommand}"/>
                     <Button Content="导出" Width="60" Margin="10,0" Command="{Binding ExportBillCommand}" />
@@ -79,9 +79,8 @@
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
                 <ToolBar>
-                    <Button Content="导入Excel" Command="{Binding ImportExcelCommand}"/>
-                    <CheckBox Content="全选" IsChecked="{Binding IsAllSelected}" Margin="10,0"/>
-                    <Button Content="添加分录" Command="{Binding AddBillCommand}"/>
+                    <Button Content="导入Excel" Command="{Binding ImportExcelCommand}" Margin="5,0"/>
+                    <Button Content="添加分录" Command="{Binding AddBillCommand}" Margin="5,0"/>
                 </ToolBar>
                 <DataGrid Grid.Row="1" ItemsSource="{Binding FilteredBills}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                           GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}"

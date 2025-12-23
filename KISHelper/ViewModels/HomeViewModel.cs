@@ -1,12 +1,15 @@
 ﻿using KISHelper.Common;
 using KISHelper.Services;
-using KISHelper.Views.Common;
+using KISHelper.ViewModels.Dialog;
+using KISHelper.Views.Dialog;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -17,77 +20,62 @@ namespace KISHelper.ViewModels
 {
     public class HomeViewModel : ViewModelBase
     {
-        private readonly DataRepository _repository = new();
+        #region 必要的属性
 
-        // 数据源（保持不变）
-        public ObservableCollection<AccountBook> AccountBooks { get; } = new();
-        public ObservableCollection<VoucherGroup> VoucherGroups { get; } = new();
-        public ObservableCollection<AccRule> AccRules { get; } = new();
-        public ObservableCollection<AccDimension> AccDimension { get; } = new();
-        public ObservableCollection<AccDimension> BankList { get; } = new();
-
-        // ✅ 核心数据集合（只保留这两个）
-        public ObservableCollection<BillInfo> AllBills { get; } = new();          // 源数据
-        public ObservableCollection<BillInfo> FilteredBills { get; } = new();     //  DataGrid绑定目标
-
-        // 配置项
-        public string? BookId { get; set; }
-        public string? VoucherId { get; set; }
-        public string? BankId { get; set; }
+        public AccountBook? BookSelected { get; set; }
+        public VoucherGroup? VoucherSelected { get; set; }
+        public AccDimension? BankSelected { get; set; }
         public DateTime AccDate { get; set; } = DateTime.Today;
 
-        // 命令
+        //数据源
+        public ObservableCollection<AccountBook>? AccountBooks { get; set; } = new();
+        public ObservableCollection<VoucherGroup>? VoucherGroups { get; set; } = new();
+        public ObservableCollection<AccRule>? AccRules { get; set; } = new();
+        public ObservableCollection<AccDimension>? AccDimension { get; set; } = new();
+        public ObservableCollection<AccDimension>? BankList { get; set; } = new();
+        public ObservableCollection<BillInfo>? AllBills { get; set; } = new();    //源数据
+
+        //DataGrid绑定的数据源
+        public ObservableCollection<BillInfo>? FilteredBills { get; set; } = new();    //源数据
+
+
+        //搜索框文本
+        public string? quickSearchText = string.Empty;
+        public string? QuickSearchText 
+        { 
+            get => quickSearchText;
+            set=> SetField(ref quickSearchText, value);
+        } 
+        //合计金额
+        private double totalAmount;
+        public double TotalAmount 
+        {
+            get => totalAmount;
+            set 
+            {
+                SetField(ref totalAmount, value);
+            }
+        }
+
+        #endregion
+
+
+        #region 命令
         public RelayCommand ImportExcelCommand { get; }
         public RelayCommand FilterCommand { get; }
         public RelayCommand AddBillCommand { get; }
         public RelayCommand SaveBillCommand { get; }
         public RelayCommand ExportBillCommand { get; }
-
-        // 快速搜索文本
-        private string _quickSearchText;
-        public string QuickSearchText
-        {
-            get => _quickSearchText;
-            set
-            {
-                SetField(ref _quickSearchText, value);
-                ApplyFilter(); // 修改搜索时触发筛选（会清除临时数据）
-            }
-        }
-
-        // 合计金额
-        private double _totalAmount;
-        public double TotalAmount
-        {
-            get => _totalAmount;
-            set => SetField(ref _totalAmount, value);
-        }
-
-        // 全选状态
-        private bool _isAllSelected;
-        public bool IsAllSelected
-        {
-            get => _isAllSelected;
-            set
-            {
-                if (SetField(ref _isAllSelected, value))
-                {
-                    // ✅ 直接操作 FilteredBills，无事件风暴
-                    foreach (var bill in FilteredBills)
-                    {
-                        bill.SetSelectedSilently(value);
-                    }
-                    CalculateTotal();
-                    UpdateIsAllSelectedState();
-                }
-            }
-        }
+        #endregion
 
         // 导出相关
-        public ObservableCollection<Entity> ExportEntity { get; } = new();
         public ObservableCollection<BillInfo> SaveBills { get; } = new();
+
+        private readonly DataRepository _repository = new();
+
         private string? _filePath;
-        private int _count = 1;
+
+        private List<string> _searchTerms = new();
 
         public HomeViewModel()
         {
@@ -96,83 +84,70 @@ namespace KISHelper.ViewModels
             AddBillCommand = new RelayCommand(ShowAddBillDialog);
             SaveBillCommand = new RelayCommand(OnSave);
             ExportBillCommand = new RelayCommand(OnExport);
-
             RefreshData();
             ApplyFilter(); // 初始加载
         }
 
+        #region 查询逻辑
         public void RefreshData()
         {
             try
             {
-                // 批量加载数据（减少通知）
-                var books = _repository.LoadData<AccountBook>("AccountBooks");
                 AccountBooks.Clear();
-                foreach (var item in books) AccountBooks.Add(item);
-
-                var vouchers = _repository.LoadData<VoucherGroup>("VoucherGroups");
+                AccountBooks=new ObservableCollection<AccountBook>(_repository.LoadData<AccountBook>("AccountBooks"));
                 VoucherGroups.Clear();
-                foreach (var item in vouchers) VoucherGroups.Add(item);
-
-                var rules = _repository.LoadData<AccRule>("AccRules");
+                VoucherGroups = new ObservableCollection<VoucherGroup>(_repository.LoadData<VoucherGroup>("VoucherGroups"));
                 AccRules.Clear();
-                foreach (var item in rules) AccRules.Add(item);
-
-                var dimensions = _repository.LoadData<AccDimension>("AccDimension");
+                AccRules = new ObservableCollection<AccRule>(_repository.LoadData<AccRule>("AccRules"));
                 AccDimension.Clear();
-                foreach (var item in dimensions) AccDimension.Add(item);
-
+                AccDimension = new ObservableCollection<AccDimension>(_repository.LoadData<AccDimension>("AccDimension"));
                 // 筛选银行账号
                 BankList.Clear();
-                foreach (var item in dimensions.Where(d => d.DimensionType == "银行账号"))
-                    BankList.Add(item);
-
+                BankList.Add(AccDimension.FirstOrDefault(a => a.DimensionType == "银行账号"));
                 // 恢复初始值
-                BookId = AccountBooks.FirstOrDefault()?.Id;
-                VoucherId = VoucherGroups.FirstOrDefault()?.Id;
-                BankId = BankList.FirstOrDefault()?.DimensionNumber;
+                BookSelected = AccountBooks.FirstOrDefault();
+                VoucherSelected = VoucherGroups.FirstOrDefault();
+                BankSelected = BankList.FirstOrDefault();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"数据刷新失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-        // 筛选逻辑（保留清除临时数据功能）
-        private List<string> _searchTerms = new();
-
+       
         public void ApplyFilter()
         {
             var sw = Stopwatch.StartNew();
-
-                
             // 清空旧筛选结果
+            foreach(var bill in FilteredBills)
+            {
+                bill.PropertyChanged -= OnBillPropertyChanged;
+            }
             FilteredBills.Clear();
 
-            // 2. 准备搜索词
+            // 准备搜索词
             _searchTerms = string.IsNullOrWhiteSpace(QuickSearchText)
                 ? new List<string>()
                 : QuickSearchText.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
                                  .Select(s => s.Trim().ToLower())
                                  .ToList();
 
-            // 3. 筛选并填充（单次遍历）
+            // 筛选并填充（单次遍历）
             foreach (var bill in AllBills)
             {
                 if (ShouldIncludeInFilter(bill))
                 {
                     FilteredBills.Add(bill);
+                    bill.PropertyChanged += OnBillPropertyChanged;
                 }
             }
 
-            // 4. 自动全选
+            // 自动全选
             foreach (var bill in FilteredBills)
             {
                 bill.SetSelectedSilently(true);
             }
 
-            // 5. 更新状态
-            UpdateIsAllSelectedState();
             CalculateTotal();
 
             sw.Stop();
@@ -183,7 +158,6 @@ namespace KISHelper.ViewModels
         {
             if (bill.IsTemporary) return true; // 临时数据永远显示
             if (!_searchTerms.Any()) return true; // 无搜索词则全部显示
-
             return _searchTerms.Any(searchText =>
                 bill.AccNumber?.ToLower().Contains(searchText) == true ||
                 bill.BillWayNumber?.ToLower().Contains(searchText) == true ||
@@ -191,19 +165,23 @@ namespace KISHelper.ViewModels
             );
         }
 
-        // ✅ 计算合计（极快）
+        // 计算合计
         public void CalculateTotal()
         {
             TotalAmount = FilteredBills.Where(b => b.IsSelected).Sum(b => b.AMOUNT);
         }
 
-        private void UpdateIsAllSelectedState()
+        private void OnBillPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            var allSelected = FilteredBills.Any() && FilteredBills.All(b => b.IsSelected);
-            SetField(ref _isAllSelected, allSelected);
+            if (e.PropertyName == nameof(BillInfo.IsSelected))
+            {
+                CalculateTotal();
+            }
         }
 
-        // ✅ 异步导入Excel
+        #endregion
+
+        #region 按钮命令
         private async Task ImportExcelAsync()
         {
             var dialog = new OpenFileDialog
@@ -224,21 +202,11 @@ namespace KISHelper.ViewModels
 
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    // 清理旧订阅
-                    foreach (var oldBill in AllBills)
-                    {
-                        oldBill.PropertyChanged -= OnBillPropertyChanged;
-                    }
-
                     AllBills.Clear();
-
-                    // 订阅并添加
                     foreach (var bill in bills)
                     {
-                        bill.PropertyChanged += OnBillPropertyChanged;
                         AllBills.Add(bill);
                     }
-
                     ApplyFilter(); // 重新筛选
                 });
             }
@@ -248,41 +216,25 @@ namespace KISHelper.ViewModels
             }
         }
 
-        private void OnBillPropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == nameof(BillInfo.IsSelected))
-            {
-                CalculateTotal();
-                UpdateIsAllSelectedState();
-            }
-        }
-
         private void ShowAddBillDialog()
         {
-            var dialog = new AddBillDialog { Owner = Application.Current.MainWindow };
-
-            if (dialog.ShowDialog() == true && dialog.DataContext is AddBillDialog vm)
+            var dialog = new AddBillDialog 
+            { 
+                Owner = Application.Current.MainWindow,
+                DataContext = new AddBillDialogViewModel()
+            };
+            var vm = dialog.DataContext as AddBillDialogViewModel;
+            if (dialog.ShowDialog() == true && vm!=null && vm.BillInfo!=null)
             {
-                var newBill = new BillInfo
-                {
-                    AccType = vm.AccType,
-                    DetailID_FFlex5 = vm.DetailID_FFlex5,
-                    DetailID_FFlex6 = vm.DetailID_FFlex6,
-                    AMOUNT = vm.AMOUNT,
-                    IsSelected = true,
-                    IsTemporary = true
-                };
-
-                newBill.PropertyChanged += OnBillPropertyChanged;
-
-
-                FilteredBills.Add(newBill); // 立即显示在界面上
-
+                vm.BillInfo.IsSelected = true;
+                vm.BillInfo.IsTemporary = true;
+                vm.BillInfo.PropertyChanged += OnBillPropertyChanged;
+                FilteredBills.Add(vm.BillInfo);
                 CalculateTotal();
-                UpdateIsAllSelectedState();
             }
         }
 
+        private ConvertKIS ConvertKIS = new();
         private void OnSave()
         {
             var summary = FilteredBills
@@ -297,21 +249,18 @@ namespace KISHelper.ViewModels
                     AMOUNT = g.Sum(b => b.AMOUNT)
                 })
                 .ToList();
+            VoucherInfo info = new VoucherInfo { Bank = BankSelected, Book = BookSelected, Voucher = VoucherSelected, Date = AccDate };
+            ConvertKIS.AddToKIS(new ObservableCollection<BillInfo>(summary), info);
 
-            bool isDone = false;
-            Excel2KISHelper.ExcelToKIS(ExportEntity,
-                new ObservableCollection<BillInfo>(summary),
-                AccRules, AccDimension, BookId, VoucherId, BankId, AccDate,
-                ExportEntity.Count, ref _count, ref isDone);
-
-            if (isDone)
+            if (ConvertKIS.IsFinished)
             {
                 QuickSearchText = string.Empty;
                 SaveBills.Clear();
-                _count++;
+                ConvertKIS.VoucherIndex++;
                 foreach (var item in summary) SaveBills.Add(item);
                 ApplyFilter();
             }
+            QuickSearchText = string.Empty;
         }
 
         private void OnExport()
@@ -322,20 +271,19 @@ namespace KISHelper.ViewModels
                 return;
             }
 
-            NpoiHelper.WriteToExcel(ExportEntity.ToList(),
+            NpoiHelper.WriteToExcel(ConvertKIS.Entities.ToList(),
                 Path.Combine(_filePath, "引入数据.xlsx"),
                 "凭证#单据头(FBillHead)");
-
-            
 
             if (NpoiHelper.IsExported) 
             {
                 SaveBills.Clear();
-                ExportEntity.Clear();
-                _count = 1;
+                ConvertKIS.Clear();
                 MessageBox.Show($"已导出文件：{_filePath}\\引入数据.xlsx");
             }
             
         }
+
+        #endregion
     }
 }

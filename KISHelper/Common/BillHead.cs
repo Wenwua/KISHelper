@@ -143,5 +143,13 @@ namespace KISHelper.Common
             set => SetField(ref bankDimension, value);
         }
     }
+
+    public class VoucherInfo
+    {
+        public AccountBook? Book { get; set; }
+        public VoucherGroup? Voucher { get; set; }
+        public AccDimension? Bank { get; set; }
+        public DateTime Date { get; set; }
+    }
 }
 

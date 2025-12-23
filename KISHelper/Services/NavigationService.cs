@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace KISHelper.Services
 {
     using System;
@@ -19,7 +13,7 @@ namespace KISHelper.Services
         // 类型注册表（仅注册类型）
         private readonly Dictionary<string, Type> _viewModelRegistry = new();
 
-        // ✅ 新增：实例缓存表（关键！）
+        // 实例缓存表（关键！）
         private readonly Dictionary<string, object> _viewModelCache = new();
 
         private object _currentView;
@@ -33,7 +27,7 @@ namespace KISHelper.Services
             }
         }
 
-        // 注册页面（保持不变）
+        // 注册页面
         public void Register<TViewModel>(string name) where TViewModel : new()
         {
             _viewModelRegistry[name] = typeof(TViewModel);
@@ -47,7 +41,7 @@ namespace KISHelper.Services
             _viewModelRegistry[name] = viewModelType;
         }
 
-        // ✅ 修改后的导航方法
+        //  修改后的导航方法
         public void NavigateTo(string pageName)
         {
             if (!_viewModelRegistry.TryGetValue(pageName, out var viewModelType))
@@ -64,16 +58,16 @@ namespace KISHelper.Services
             CurrentView = instance;
         }
 
-        // ✅ 新增：手动清除指定页面缓存（用于需要刷新数据的场景）
+        // 手动清除指定页面缓存（用于需要刷新数据的场景）
         public void ClearCache(string pageName)
         {
             _viewModelCache.Remove(pageName);
         }
 
-        // ✅ 新增：清除所有缓存
+        // 清除所有缓存
         public void ClearAllCache() => _viewModelCache.Clear();
 
-        // 清除注册表（保持不变）
+        // 清除注册表
         public void ClearRegistry()
         {
             _viewModelRegistry.Clear();
@@ -108,7 +102,7 @@ namespace KISHelper.Services
             }
 
             private readonly Dictionary<string, Type> _viewModelRegistry = new();
-            // ✅ 新增缓存
+            // 新增缓存
             private readonly Dictionary<string, object> _viewModelCache = new();
 
             public void Register<TViewModel>(string name) where TViewModel : new()

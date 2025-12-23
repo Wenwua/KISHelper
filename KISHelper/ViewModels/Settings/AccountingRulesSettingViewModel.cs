@@ -1,5 +1,6 @@
 ﻿using KISHelper.Common;
-using KISHelper.Views.Common;
+using KISHelper.ViewModels.Dialog;
+using KISHelper.Views.Dialog;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,86 +15,86 @@ namespace KISHelper.ViewModels.Settings
 {
     public class AccountingRulesSettingViewModel : ViewModelBase
     {
+        #region 绑定的类
+        private AccRule? selectedItem;
+        public AccRule? SelectedItem
+        {
+            get => selectedItem;
+            set => SetField(ref selectedItem, value);
+        }
+
         private readonly DataRepository _repository = new();
         public ObservableCollection<AccRule> AccRules { get; }
-
+        #endregion
         public AccountingRulesSettingViewModel()
         {
             AccRules = new ObservableCollection<AccRule>(
                 _repository.LoadData<AccRule>("AccRules"));
+            AddRuleCommand = new RelayCommand(ExecuteAddRule);
+            EditRuleCommand = new RelayCommand(ExecuteEditRule);
+            DeleteRuleCommand = new RelayCommand(ExecuteDeleteRule);
+            ImportRuleCommand = new RelayCommand(ImportRule);
+
         }
 
-        // ========== 命令 ==========
-        private ICommand _addRuleCommand;
-        public ICommand AddRuleCommand => _addRuleCommand ??= new RelayCommand(ExecuteAddRule);
+        #region 命令
+        public RelayCommand AddRuleCommand { get; } 
+        public RelayCommand EditRuleCommand { get; }
+        public RelayCommand DeleteRuleCommand { get; }
+        public ICommand ImportRuleCommand { get; }
+        #endregion
 
-        private ICommand _editRuleCommand;
-        public ICommand EditRuleCommand => _editRuleCommand ??= new RelayCommand<AccRule>(ExecuteEditRule);
-
-        private ICommand _deleteRuleCommand;
-        public ICommand DeleteRuleCommand => _deleteRuleCommand ??= new RelayCommand<AccRule>(ExecuteDeleteRule);
-
-        private ICommand importRuleCommand;
-        public ICommand ImportRuleCommand => importRuleCommand ??= new RelayCommand(ImportRule);
-
-        private ICommand downloadSampleCommand;
-        public ICommand DownloadSampleCommand => downloadSampleCommand ??= new RelayCommand(DownloadSample);
-
+        #region 过程
         private void ExecuteAddRule()
         {
-            var dialog = new RuleDialog("添加");
-            dialog.Owner = Application.Current.MainWindow;
-            if (dialog.ShowDialog() == true)
+            var dialog = new RuleDialog()
+            {
+                Owner = Application.Current.MainWindow,
+                DataContext = new RuleDialogViewModel()
+            };
+            var vm = dialog.DataContext as RuleDialogViewModel;
+            if (dialog.ShowDialog() == true && vm != null && vm.AccRule != null)
             {
                 // 检查ID是否已存在
-                if (AccRules.Any(a => a.AccName == dialog.AccName))
+                if (AccRules.Any(a => a.AccName == vm.AccRule.AccName))
                 {
-                    MessageBox.Show($"核算项目 '{dialog.AccName}' 已存在！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"核算项目 '{vm.AccRule.AccName}' 已存在！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
-
-                AccRules.Add(new AccRule { 
-                    AccName = dialog.AccName, 
-                    AccountID = dialog.AccountID, 
-                    AccFDC=dialog.AccFDC,
-                    AccFiexItem=dialog.AccFiexItem,
-                    DefaultDetailID_FFlex5=dialog.DefaultDetailID_FFlex5 });
+                AccRules.Add(vm.AccRule);
                 SaveAllData();
             }
         }
 
-        private void ExecuteEditRule(AccRule accRule)
+        private void ExecuteEditRule()
         {
-            if (accRule == null) return;
-            var dialog = new RuleDialog("编辑", accRule.AccName, accRule.AccountID,accRule.AccFDC,accRule.AccFiexItem);
-            dialog.Owner = Application.Current.MainWindow;
-            if (dialog.ShowDialog() == true)
+            if (SelectedItem == null) return;
+            var dialog = new RuleDialog() 
             {
-                // 如果AccName改了，检查是否与其他冲突
-                if (dialog.AccName != accRule.AccName && AccRules.Any(a => a.AccName == dialog.AccName))
-                {
-                    MessageBox.Show($"核算项目 '{dialog.AccName}' 已存在！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-
-                accRule.AccName = dialog.AccName;
-                accRule.AccountID= dialog.AccountID;
-                accRule.AccFDC= dialog.AccFDC;
-                accRule.AccFiexItem= dialog.AccFiexItem;
-                accRule.DefaultDetailID_FFlex5 = dialog.DefaultDetailID_FFlex5;
+                Owner = Application.Current.MainWindow,
+                DataContext = new RuleDialogViewModel()
+            };
+            var vm = dialog.DataContext as RuleDialogViewModel;
+            if (vm != null)
+            {
+                vm.AccRule = SelectedItem;
+            }
+            if (dialog.ShowDialog() == true && vm != null && vm.AccRule != null)
+            {
+                SelectedItem = vm.AccRule;
                 SaveAllData();
             }
         }
 
-        private void ExecuteDeleteRule(AccRule accRule)
+        private void ExecuteDeleteRule()
         {
-            if (accRule == null) return;
+            if (SelectedItem == null) return;
 
-            var result = MessageBox.Show($"确认删除核算规则 '{accRule.AccName}' 吗？", "警告",
+            var result = MessageBox.Show($"确认删除核算规则 '{SelectedItem.AccName}' 吗？", "警告",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (result == MessageBoxResult.Yes)
             {
-                AccRules.Remove(accRule);
+                AccRules.Remove(SelectedItem);
                 SaveAllData();
             }
         }
@@ -130,14 +131,10 @@ namespace KISHelper.ViewModels.Settings
             }
         }
 
-        private void DownloadSample()
-        {
-
-        }
-
         private void SaveAllData()
         {
             _repository.SaveData("AccRules", AccRules.ToList());
         }
+        #endregion
     }
 }

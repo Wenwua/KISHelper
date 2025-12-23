@@ -16,34 +16,21 @@
                 </Grid.RowDefinitions>
 
                 <ToolBar Grid.Row="0">
-                    <Button Content="添加" Command="{Binding AddRuleCommand}"/>
+                    <Button Content="添加" Command="{Binding AddRuleCommand}" Margin="5,0"/>
+                    <Button Content="修改" Command="{Binding EditRuleCommand}" Margin="5,0"/>
+                    <Button Content="删除" Command="{Binding DeleteRuleCommand}" Margin="5,0"/>
                     <Button Content="引入" Command="{Binding ImportRuleCommand}" Margin="5,0"/>
-                    <Button Content="模板下载" Command="{Binding DownloadSampleCommand}"/>
                 </ToolBar>
 
                 <DataGrid ItemsSource="{Binding AccRules}" AutoGenerateColumns="False" CanUserAddRows="False" Grid.Row="1" IsReadOnly="True"
-                  GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}">
+                  GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}"
+                          SelectedItem="{Binding SelectedItem}" MinRowHeight="30">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="核算项目" Binding="{Binding AccName, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
                         <DataGridTextColumn Header="科目编码" Binding="{Binding AccountID, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
                         <DataGridTextColumn Header="余额方向" Binding="{Binding AccFDC, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
                         <DataGridTextColumn Header="核算维度" Binding="{Binding AccFiexItem, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
                         <DataGridTextColumn Header="默认部门" Binding="{Binding DefaultDetailID_FFlex5, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
-                        <!-- 操作列 -->
-                        <DataGridTemplateColumn Header="操作" Width="*" >
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Content="修改" Margin="2" Padding="5,2"
-                        Command="{Binding DataContext.EditRuleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                        CommandParameter="{Binding}"/>
-                                        <Button Content="删除" Margin="2" Padding="5,2"
-                        Command="{Binding DataContext.DeleteRuleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                        CommandParameter="{Binding}"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

@@ -1,5 +1,6 @@
 ﻿using KISHelper.Common;
-using KISHelper.Views.Common;
+using KISHelper.ViewModels.Dialog;
+using KISHelper.Views.Dialog;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,92 +15,87 @@ namespace KISHelper.ViewModels.Settings
 {
     public class AccountingDimensionSettingViewModel : ViewModelBase
     {
+        #region 绑定的类
+        private AccDimension? selectedItem;
+        public AccDimension? SelectedItem
+        {
+            get => selectedItem;
+            set => SetField(ref selectedItem, value);
+        }
         private readonly DataRepository _repository = new();
         public ObservableCollection<AccDimension> AccDimension { get; }
+        #endregion
 
         public AccountingDimensionSettingViewModel()
         {
             AccDimension = new ObservableCollection<AccDimension>(
                 _repository.LoadData<AccDimension>("AccDimension"));
+            AddDimensionCommand = new RelayCommand(ExecuteAddDimension);
+            EditDimensionCommand = new RelayCommand(ExecuteEditDimension);
+            DeleteDimensionCommand = new RelayCommand(ExecuteDeleteDimension);
+            ImportDimensionCommand = new RelayCommand(ImportDimension);
         }
 
-        // ========== 命令 ==========
-        private ICommand _addDimensionCommand;
-        public ICommand AddDimensionCommand => _addDimensionCommand ??= new RelayCommand(ExecuteAddDimension);
+        #region 命令
 
-        private ICommand _editDimensionCommand;
-        public ICommand EditDimensionCommand => _editDimensionCommand ??= new RelayCommand<AccDimension>(ExecuteEditDimension);
+        public RelayCommand AddDimensionCommand { get; }
+        public RelayCommand EditDimensionCommand { get; }
+        public RelayCommand DeleteDimensionCommand { get; }
+        public RelayCommand ImportDimensionCommand { get; }
 
-        private ICommand _deleteDimensionCommand;
-        public ICommand DeleteDimensionCommand => _deleteDimensionCommand ??= new RelayCommand<AccDimension>(ExecuteDeleteDimension);
+        #endregion
 
-        private ICommand importDimensionCommand;
-        public ICommand ImportDimensionCommand => importDimensionCommand ??= new RelayCommand(ImportDimension);
-
-        private ICommand downloadSampleCommand;
-        public ICommand DownloadSampleCommand => downloadSampleCommand ??= new RelayCommand(DownloadSample);
-
+        #region 过程
         private void ExecuteAddDimension()
         {
-            var dialog = new DimensionDialog("添加");
-            dialog.Owner = Application.Current.MainWindow;
-            if (dialog.ShowDialog() == true)
+            var dialog = new DimensionDialog()
+            {
+                Owner = Application.Current.MainWindow,
+                DataContext = new DimensionDialogViewModel()
+            };
+            var vm = dialog.DataContext as DimensionDialogViewModel;
+            if (dialog.ShowDialog() == true && vm!=null && vm.AccDimension != null)
             {
                 // 检查关键字是否已存在
-                if (AccDimension.Any(a => a.DimensionType+a.DimensionName == dialog.DimensionType+dialog.DimensionName))
+                if (AccDimension.Any(a => a.DimensionType== vm.AccDimension.DimensionType && a.DimensionName==vm.AccDimension.DimensionName))
                 {
-                    MessageBox.Show($"核算维度 '{dialog.DimensionType}'：'{dialog.DimensionName}' 已存在！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"核算维度 '{vm.AccDimension.DimensionType}'：'{vm.AccDimension.DimensionName}' 已存在！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
-                AccDimension.Add(new AccDimension { 
-                    DimensionType= dialog.DimensionType, 
-                    DimensionName = dialog.DimensionName, 
-                    DimensionNumber = dialog.DimensionNumber,
-                    AccID = dialog.AccID,
-                    BankDimension=dialog.BankDimension});
+                AccDimension.Add(vm.AccDimension);
                 SaveAllData();
             }
         }
 
-        private void ExecuteEditDimension(AccDimension accDimension)
+        private void ExecuteEditDimension()
         {
-            if (accDimension == null) return;
-            var dialog = new DimensionDialog("编辑", accDimension.DimensionType, accDimension.DimensionName, accDimension.DimensionNumber, accDimension.AccID,accDimension.BankDimension);
-            dialog.Owner = Application.Current.MainWindow;
-            if (dialog.ShowDialog() == true)
+            if (SelectedItem == null) return;
+            var dialog = new DimensionDialog()
             {
-                var result = AccDimension
-                    .Where(a => a.DimensionType == dialog.DimensionType && a.DimensionName == dialog.DimensionName).ToList();
-                // 如果AccName改了，检查是否与其他冲突
-                if (result.Any())
-                {
-                    result[0].DimensionType = dialog.DimensionType;
-                    result[0].DimensionName = dialog.DimensionName;
-                    result[0].DimensionNumber = dialog.DimensionNumber;
-                    result[0].AccID = dialog.AccID;
-                    result[0].BankDimension = dialog.BankDimension;
-                }
-                else
-                {
-                    accDimension.DimensionType = dialog.DimensionType;
-                    accDimension.DimensionName = dialog.DimensionName;
-                    accDimension.DimensionNumber = dialog.DimensionNumber;
-                    accDimension.AccID = dialog.AccID;
-                    accDimension.BankDimension = dialog.BankDimension;
-                }
+                Owner = Application.Current.MainWindow,
+                DataContext = new DimensionDialogViewModel()
+            };
+            var vm = dialog.DataContext as DimensionDialogViewModel;
+            if (vm != null)
+            {
+                vm.AccDimension = SelectedItem;
+            }
+            if (dialog.ShowDialog() == true && vm != null && vm.AccDimension != null)
+            {
+                SelectedItem = vm.AccDimension;
                 SaveAllData();
             }
         }
 
-        private void ExecuteDeleteDimension(AccDimension accDimension)
+        private void ExecuteDeleteDimension()
         {
-            if (accDimension == null) return;
+            if (SelectedItem == null) return;
 
-            var result = MessageBox.Show($"确认删除核算维度 '{accDimension.DimensionName}' 吗？", "警告",
+            var result = MessageBox.Show($"确认删除核算维度 '{SelectedItem.DimensionName}' 吗？", "警告",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (result == MessageBoxResult.Yes)
             {
-                AccDimension.Remove(accDimension);
+                AccDimension.Remove(SelectedItem);
                 SaveAllData();
             }
         }
@@ -136,15 +132,11 @@ namespace KISHelper.ViewModels.Settings
                 MessageBox.Show($"导入失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-        private void DownloadSample()
-        {
-
-        }
-
         private void SaveAllData()
         {
             _repository.SaveData("AccDimension", AccDimension.ToList());
         }
+
+        #endregion
     }
 }

@@ -21,31 +21,17 @@
                 </Grid.RowDefinitions>
 
                 <ToolBar Grid.Row="0">
-                    <Button Content="添加" Command="{Binding AddAccountCommand}"/>
+                    <Button Content="添加" Command="{Binding AddAccountCommand}" Margin="5,0"/>
+                    <Button Content="修改" Command="{Binding EditAccountCommand}" Margin="5,0"/>
+                    <Button Content="删除" Command="{Binding DeleteAccountCommand}" Margin="5,0"/>
                 </ToolBar>
 
                 <DataGrid ItemsSource="{Binding AccountBooks}" AutoGenerateColumns="False" CanUserAddRows="False" Grid.Row="1" IsReadOnly="True"
-                          GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}">
+                          GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}"
+                          SelectedItem="{Binding SelectedBook}" MinRowHeight="30">
                     <DataGrid.Columns>
-                        <!-- ID列可编辑 -->
                         <DataGridTextColumn Header="账簿编码" Binding="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
-                        <!-- Name列可编辑 -->
                         <DataGridTextColumn Header="账簿名称" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
-                        <!-- 操作列 -->
-                        <DataGridTemplateColumn Header="操作" Width="*" >
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Content="修改" Margin="2" Padding="5,2"
-                                Command="{Binding DataContext.EditAccountCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                CommandParameter="{Binding}"/>
-                                        <Button Content="删除" Margin="2" Padding="5,2"
-                                Command="{Binding DataContext.DeleteAccountCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                CommandParameter="{Binding}"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>
@@ -60,31 +46,17 @@
                 </Grid.RowDefinitions>
 
                 <ToolBar Grid.Row="0">
-                    <Button Content="添加" Command="{Binding AddVoucherCommand}"/>
+                    <Button Content="添加" Command="{Binding AddVoucherCommand}" Margin="5,0"/>
+                    <Button Content="修改" Command="{Binding EditVoucherCommand}" Margin="5,0"/>
+                    <Button Content="删除" Command="{Binding DeleteVoucherCommand}"  Margin="5,0"/>
                 </ToolBar>
 
                 <DataGrid ItemsSource="{Binding VoucherGroups}" AutoGenerateColumns="False" CanUserAddRows="False" Grid.Row="1" IsReadOnly="True"
-                          GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}">
+                          GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}"
+                          SelectedItem="{Binding SelectedVoucher}" MinRowHeight="30">
                     <DataGrid.Columns>
-                        <!-- ID列可编辑 -->
                         <DataGridTextColumn Header="凭证字编码" Binding="{Binding Id, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
-                        <!-- Name列可编辑 -->
                         <DataGridTextColumn Header="凭证字名称" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
-                        <!-- 操作列 -->
-                        <DataGridTemplateColumn Header="操作" Width="*">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Content="修改" Margin="2" Padding="5,2"
-                    Command="{Binding DataContext.EditVoucherCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                    CommandParameter="{Binding}"/>
-                                        <Button Content="删除" Margin="2" Padding="5,2"
-                    Command="{Binding DataContext.DeleteVoucherCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                    CommandParameter="{Binding}"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

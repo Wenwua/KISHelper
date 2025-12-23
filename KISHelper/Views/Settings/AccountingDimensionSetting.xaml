@@ -16,34 +16,22 @@
                 </Grid.RowDefinitions>
 
                 <ToolBar Grid.Row="0">
-                    <Button Content="添加" Command="{Binding AddDimensionCommand}"/>
+                    <Button Content="添加" Command="{Binding AddDimensionCommand}" Margin="5,0" />
+                    <Button Content="修改" Command="{Binding EditDimensionCommand}" Margin="5,0" />
+                    <Button Content="删除" Command="{Binding DeleteDimensionCommand}" Margin="5,0" />
                     <Button Content="引入" Command="{Binding ImportDimensionCommand}" Margin="5,0"/>
-                    <Button Content="模板下载" Command="{Binding DownloadSampleCommand}"/>
                 </ToolBar>
 
                 <DataGrid ItemsSource="{Binding AccDimension}" AutoGenerateColumns="False" CanUserAddRows="False" Grid.Row="1" IsReadOnly="True"
-                          GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}">
+                          GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}"
+                          SelectedItem="{Binding SelectedItem}" MinRowHeight="30">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="维度类型" Binding="{Binding DimensionType, UpdateSourceTrigger=LostFocus}" Width="*"/>
                         <DataGridTextColumn Header="维度名称" Binding="{Binding DimensionName, UpdateSourceTrigger=LostFocus}" Width="*"/>
                         <DataGridTextColumn Header="维度编码" Binding="{Binding DimensionNumber, UpdateSourceTrigger=LostFocus}" Width="*"/>
                         <DataGridTextColumn Header="银行科目" Binding="{Binding AccID, UpdateSourceTrigger=LostFocus}" Width="*"/>
                         <DataGridTextColumn Header="银行维度" Binding="{Binding BankDimension, UpdateSourceTrigger=LostFocus}" Width="*"/>
-                        <!-- 操作列 -->
-                        <DataGridTemplateColumn Header="操作" Width="*" >
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Content="修改" Margin="2" Padding="5,2"
-                                                Command="{Binding DataContext.EditDimensionCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                CommandParameter="{Binding}"/>
-                                        <Button Content="删除" Margin="2" Padding="5,2"
-                                                Command="{Binding DataContext.DeleteDimensionCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                CommandParameter="{Binding}"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
+
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>
