@@ -36,7 +36,8 @@ namespace KISHelper.ViewModels
         public ObservableCollection<BillInfo>? AllBills { get; set; } = new();    //源数据
 
         //DataGrid绑定的数据源
-        public ObservableCollection<BillInfo>? FilteredBills { get; set; } = new();    //源数据
+        public ObservableCollection<BillInfo>? LeftBills { get; set; } = new();    // 左边DataGrid
+        public ObservableCollection<BillInfo>? RightBills { get; set; } = new();   // 右边DataGrid
 
 
         //搜索框文本
@@ -46,14 +47,24 @@ namespace KISHelper.ViewModels
             get => quickSearchText;
             set=> SetField(ref quickSearchText, value);
         } 
-        //合计金额
-        private double totalAmount;
-        public double TotalAmount 
+        //左边的合计金额
+        private double leftTotalAmount;
+        public double LeftTotalAmount
         {
-            get => totalAmount;
+            get => leftTotalAmount;
             set 
             {
-                SetField(ref totalAmount, value);
+                SetField(ref leftTotalAmount, value);
+            }
+        }
+
+        private double rightTotalAmount;
+        public double RightTotalAmount
+        {
+            get => rightTotalAmount;
+            set
+            {
+                SetField(ref rightTotalAmount, value);
             }
         }
 
@@ -66,6 +77,11 @@ namespace KISHelper.ViewModels
         public RelayCommand AddBillCommand { get; }
         public RelayCommand SaveBillCommand { get; }
         public RelayCommand ExportBillCommand { get; }
+        public RelayCommand MoveSelectedToRightCommand { get; }
+        public RelayCommand MoveSelectedToLeftCommand { get; }
+        public RelayCommand<BillInfo> MoveItemToRightCommand { get; }
+        public RelayCommand<BillInfo> MoveItemToLeftCommand { get; }
+
         #endregion
 
         // 导出相关
@@ -84,6 +100,13 @@ namespace KISHelper.ViewModels
             AddBillCommand = new RelayCommand(ShowAddBillDialog);
             SaveBillCommand = new RelayCommand(OnSave);
             ExportBillCommand = new RelayCommand(OnExport);
+
+            // 初始化移动命令
+            MoveSelectedToRightCommand = new RelayCommand(() => MoveSelectedItems(LeftBills, RightBills));
+            MoveSelectedToLeftCommand = new RelayCommand(() => MoveSelectedItems(RightBills, LeftBills));
+            MoveItemToRightCommand = new RelayCommand<BillInfo>(item => MoveSingleItem(item, LeftBills, RightBills));
+            MoveItemToLeftCommand = new RelayCommand<BillInfo>(item => MoveSingleItem(item, RightBills, LeftBills));
+
             RefreshData();
             ApplyFilter(); // 初始加载
         }
@@ -119,11 +142,11 @@ namespace KISHelper.ViewModels
         {
             var sw = Stopwatch.StartNew();
             // 清空旧筛选结果
-            foreach(var bill in FilteredBills)
+            foreach(var bill in LeftBills)
             {
-                bill.PropertyChanged -= OnBillPropertyChanged;
+                bill.PropertyChanged -= OnLeftBillPropertyChanged;
             }
-            FilteredBills.Clear();
+            LeftBills.Clear();
 
             // 准备搜索词
             _searchTerms = string.IsNullOrWhiteSpace(QuickSearchText)
@@ -132,18 +155,18 @@ namespace KISHelper.ViewModels
                                  .Select(s => s.Trim().ToLower())
                                  .ToList();
 
-            // 筛选并填充（单次遍历）
-            foreach (var bill in AllBills)
+            // 筛选并填充（排除已在右侧的数据）
+            foreach (var bill in AllBills.Where(b => !RightBills.Contains(b)))
             {
                 if (ShouldIncludeInFilter(bill))
                 {
-                    FilteredBills.Add(bill);
-                    bill.PropertyChanged += OnBillPropertyChanged;
+                    LeftBills.Add(bill);
+                    bill.PropertyChanged += OnLeftBillPropertyChanged;
                 }
             }
 
             // 自动全选
-            foreach (var bill in FilteredBills)
+            foreach (var bill in LeftBills)
             {
                 bill.SetSelectedSilently(true);
             }
@@ -151,7 +174,7 @@ namespace KISHelper.ViewModels
             CalculateTotal();
 
             sw.Stop();
-            Debug.WriteLine($"筛选完成: {sw.ElapsedMilliseconds}ms, 结果数: {FilteredBills.Count}");
+            Debug.WriteLine($"筛选完成: {sw.ElapsedMilliseconds}ms, 结果数: {LeftBills.Count}");
         }
 
         private bool ShouldIncludeInFilter(BillInfo bill)
@@ -168,15 +191,49 @@ namespace KISHelper.ViewModels
         // 计算合计
         public void CalculateTotal()
         {
-            TotalAmount = FilteredBills.Where(b => b.IsSelected).Sum(b => b.AMOUNT);
+            LeftTotalAmount = LeftBills.Where(b => b.IsSelected).Sum(b => b.AMOUNT);
+            RightTotalAmount = RightBills.Where(b => b.IsSelected).Sum(b => b.AMOUNT);
         }
 
-        private void OnBillPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        private void OnLeftBillPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(BillInfo.IsSelected))
             {
                 CalculateTotal();
             }
+        }
+
+        #endregion
+
+        #region 移动数据逻辑
+
+        private void MoveSelectedItems(ObservableCollection<BillInfo> source, ObservableCollection<BillInfo> target)
+        {
+            var selectedItems = source.Where(b => b.IsSelected).ToList();
+            MoveItems(selectedItems, source, target);
+        }
+
+        private void MoveSingleItem(BillInfo item, ObservableCollection<BillInfo> source, ObservableCollection<BillInfo> target)
+        {
+            if (item != null && source.Contains(item))
+            {
+                MoveItems(new List<BillInfo> { item }, source, target);
+            }
+        }
+
+        private void MoveItems(List<BillInfo> items, ObservableCollection<BillInfo> source, ObservableCollection<BillInfo> target)
+        {
+            if (!items.Any()) return;
+
+            // 解除事件绑定
+            foreach (var item in items)
+            {
+                item.PropertyChanged -= OnLeftBillPropertyChanged;
+                source.Remove(item);
+                target.Add(item);
+            }
+
+            CalculateTotal();
         }
 
         #endregion
@@ -228,8 +285,8 @@ namespace KISHelper.ViewModels
             {
                 vm.BillInfo.IsSelected = true;
                 vm.BillInfo.IsTemporary = true;
-                vm.BillInfo.PropertyChanged += OnBillPropertyChanged;
-                FilteredBills.Add(vm.BillInfo);
+                vm.BillInfo.PropertyChanged += OnLeftBillPropertyChanged;
+                RightBills.Add(vm.BillInfo);
                 CalculateTotal();
             }
         }
@@ -237,7 +294,7 @@ namespace KISHelper.ViewModels
         private ConvertKIS ConvertKIS = new();
         private void OnSave()
         {
-            var summary = FilteredBills
+            var summary = RightBills
                 .Where(b => b.IsSelected)
                 .GroupBy(b => new { b.AccType, b.AccNumber, b.DetailID_FFlex6, b.DetailID_FFlex5 })
                 .Select(g => new BillInfo
@@ -256,7 +313,9 @@ namespace KISHelper.ViewModels
             {
                 QuickSearchText = string.Empty;
                 SaveBills.Clear();
+                RightBills.Clear();
                 ConvertKIS.VoucherIndex++;
+                
                 foreach (var item in summary) SaveBills.Add(item);
                 ApplyFilter();
             }

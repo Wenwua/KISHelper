@@ -72,32 +72,41 @@
         </Border>
 
         <Grid Grid.Row="1" Grid.Column="1" Margin="5,5,10,5">
-            <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Grid Margin="0,0,5,0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
                     <RowDefinition/>
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
                 <ToolBar>
-                    <Button Content="导入Excel" Command="{Binding ImportExcelCommand}" Margin="5,0"/>
-                    <Button Content="添加分录" Command="{Binding AddBillCommand}" Margin="5,0"/>
+                    <Button Content="导入Excel" Command="{Binding ImportExcelCommand}" Height="30" Margin="5"/>
+                    <Button Content="→" Command="{Binding MoveSelectedToRightCommand}" Height="30" Width="30" Margin="5"/>
                 </ToolBar>
-                <DataGrid Grid.Row="1" ItemsSource="{Binding FilteredBills}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                <DataGrid Grid.Row="1" ItemsSource="{Binding LeftBills}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                           GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}"
-                          RowHeight="30" ColumnWidth="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                          RowHeight="30" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                    <DataGrid.InputBindings>
+                        <MouseBinding Gesture="LeftDoubleClick" 
+                                    Command="{Binding MoveItemToRightCommand}" 
+                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=DataGrid}, Path=SelectedItem}"/>
+                    </DataGrid.InputBindings>
                     <DataGrid.Columns>
                         <DataGridCheckBoxColumn Header="选择" 
                                 Binding="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                 IsReadOnly="False"
                                 Width="50"
                                 ElementStyle="{StaticResource CenteredCheckBoxStyle}"/>
-                        <DataGridTextColumn Header="凭证号" Binding="{Binding AccNumber}" Width="*"/>
-                        <DataGridTextColumn Header="来源单号" Binding="{Binding BillWayNumber}" Width="*"/>
-                        <DataGridTextColumn Header="核销类型" Binding="{Binding AccType}" Width="*"/>
-                        <DataGridTextColumn Header="客户" Binding="{Binding DetailID_FFlex6}" Width="*"/>
-                        <DataGridTextColumn Header="部门" Binding="{Binding DetailID_FFlex5}" Width="*"/>
-                        <DataGridTextColumn Header="核销金额" Binding="{Binding AMOUNT}" Width="*"/>
-                        <DataGridTextColumn Header="核销日期" Binding="{Binding TRANSDATE}" Width="*"/>
+                        <DataGridTextColumn Header="凭证号" Binding="{Binding AccNumber}" Width="120"/>
+                        <DataGridTextColumn Header="来源单号" Binding="{Binding BillWayNumber}" Width="120"/>
+                        <DataGridTextColumn Header="核销类型" Binding="{Binding AccType}" Width="80"/>
+                        <DataGridTextColumn Header="客户" Binding="{Binding DetailID_FFlex6}" Width="100"/>
+                        <DataGridTextColumn Header="部门" Binding="{Binding DetailID_FFlex5}" Width="100"/>
+                        <DataGridTextColumn Header="核销金额" Binding="{Binding AMOUNT}" Width="80"/>
+                        <DataGridTextColumn Header="核销日期" Binding="{Binding TRANSDATE}" Width="100"/>
                     </DataGrid.Columns>
                 </DataGrid>
                 <StackPanel Grid.Row="2" 
@@ -106,15 +115,60 @@
                     <TextBlock Text="合计金额:" 
                        FontWeight="Bold" 
                        Margin="10,5"/>
-                    <TextBlock Text="{Binding TotalAmount}" 
+                    <TextBlock Text="{Binding LeftTotalAmount}" 
                        Foreground="Red"
                        FontSize="14" 
                        FontWeight="Bold"
                        Margin="4"/>
                 </StackPanel>
             </Grid>
-            
-            
+
+            <Grid Grid.Column="1" Margin="5,0,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition/>
+                    <RowDefinition Height="auto"/>
+                </Grid.RowDefinitions>
+                <ToolBar>
+                    <Button Content="添加分录" Command="{Binding AddBillCommand}"  Height="30" Margin="5"/>
+                    <Button Content="←" Command="{Binding MoveSelectedToLeftCommand}" Height="30" Width="30" Margin="5"/>
+                </ToolBar>
+                <DataGrid Grid.Row="1" ItemsSource="{Binding RightBills}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+              GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}"
+              RowHeight="30" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                    <DataGrid.InputBindings>
+                        <MouseBinding Gesture="LeftDoubleClick" 
+                                    Command="{Binding MoveItemToLeftCommand}" 
+                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=DataGrid}, Path=SelectedItem}"/>
+                    </DataGrid.InputBindings>
+                    <DataGrid.Columns>
+                        <DataGridCheckBoxColumn Header="选择" 
+                    Binding="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    IsReadOnly="False"
+                    Width="50"
+                    ElementStyle="{StaticResource CenteredCheckBoxStyle}"/>
+                        <DataGridTextColumn Header="凭证号" Binding="{Binding AccNumber}" Width="120"/>
+                        <DataGridTextColumn Header="来源单号" Binding="{Binding BillWayNumber}" Width="120"/>
+                        <DataGridTextColumn Header="核销类型" Binding="{Binding AccType}" Width="80"/>
+                        <DataGridTextColumn Header="客户" Binding="{Binding DetailID_FFlex6}" Width="100"/>
+                        <DataGridTextColumn Header="部门" Binding="{Binding DetailID_FFlex5}" Width="100"/>
+                        <DataGridTextColumn Header="核销金额" Binding="{Binding AMOUNT}" Width="80"/>
+                        <DataGridTextColumn Header="核销日期" Binding="{Binding TRANSDATE}" Width="100"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <StackPanel Grid.Row="2" 
+        Orientation="Horizontal" 
+        Background="#F5F5F5">
+                    <TextBlock Text="合计金额:" 
+           FontWeight="Bold" 
+           Margin="10,5"/>
+                    <TextBlock Text="{Binding RightTotalAmount}" 
+           Foreground="Red"
+           FontSize="14" 
+           FontWeight="Bold"
+           Margin="4"/>
+                </StackPanel>
+            </Grid>
 
 
         </Grid>
