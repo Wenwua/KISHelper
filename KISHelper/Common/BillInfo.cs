@@ -87,6 +87,14 @@ namespace KISHelper.Common
             set => SetField(ref tRANSDATE, value);
         }
 
+        private string? detailID_FFlex9;
+        [ExcelColumn("DetailID_FFlex9", Order = 9)]
+        public string? DetailID_FFlex9
+        {
+            get => detailID_FFlex9;
+            set => SetField(ref detailID_FFlex9, value);
+        }
+
         public bool IsTemporary { get; set; } = false;
     }
 }

@@ -22,9 +22,24 @@ namespace KISHelper.ViewModels
     {
         #region 必要的属性
 
-        public AccountBook? BookSelected { get; set; }
-        public VoucherGroup? VoucherSelected { get; set; }
-        public AccDimension? BankSelected { get; set; }
+        private AccountBook? bookSelected=new();
+        public AccountBook? BookSelected 
+        {
+            get => bookSelected;
+            set => SetField(ref bookSelected, value);
+        }
+        private VoucherGroup? voucherSelected = new();
+        public VoucherGroup? VoucherSelected 
+        {
+            get => voucherSelected;
+            set => SetField(ref voucherSelected, value);
+        }
+        private AccDimension? bankSelected = new();
+        public AccDimension? BankSelected 
+        {
+            get => bankSelected;
+            set => SetField(ref bankSelected, value);
+        }
         public DateTime AccDate { get; set; } = DateTime.Today;
 
         //数据源
@@ -65,6 +80,26 @@ namespace KISHelper.ViewModels
             set
             {
                 SetField(ref rightTotalAmount, value);
+            }
+        }
+
+        private bool isImporting;
+        public bool IsImporting
+        {
+            get => isImporting;
+            set
+            {
+                SetField(ref isImporting, value);
+            }
+        }
+
+        private bool isExporting;
+        public bool IsExporting
+        {
+            get => isExporting;
+            set
+            {
+                SetField(ref isExporting, value);
             }
         }
 
@@ -117,16 +152,24 @@ namespace KISHelper.ViewModels
             try
             {
                 AccountBooks.Clear();
-                AccountBooks=new ObservableCollection<AccountBook>(_repository.LoadData<AccountBook>("AccountBooks"));
                 VoucherGroups.Clear();
-                VoucherGroups = new ObservableCollection<VoucherGroup>(_repository.LoadData<VoucherGroup>("VoucherGroups"));
                 AccRules.Clear();
-                AccRules = new ObservableCollection<AccRule>(_repository.LoadData<AccRule>("AccRules"));
                 AccDimension.Clear();
-                AccDimension = new ObservableCollection<AccDimension>(_repository.LoadData<AccDimension>("AccDimension"));
+                var accbooks = _repository.LoadData<AccountBook>("AccountBooks").ToList();
+                foreach (var item in accbooks) { AccountBooks.Add(item); }
+
+                var vouchers = _repository.LoadData<VoucherGroup>("VoucherGroups").ToList();
+                foreach (var item in vouchers) { VoucherGroups.Add(item); }
+                
+                var rules = _repository.LoadData<AccRule>("AccRules").ToList();
+                foreach (var item in rules) { AccRules.Add(item); }
+
+                var dimensions = _repository.LoadData<AccDimension>("AccDimension").ToList();
+                foreach (var item in dimensions) { AccDimension.Add(item); }
                 // 筛选银行账号
                 BankList.Clear();
-                BankList.Add(AccDimension.FirstOrDefault(a => a.DimensionType == "银行账号"));
+                var result = AccDimension.Where(a => a.DimensionType == "银行账号").ToList();
+                foreach (var item in result) { BankList.Add(item); }
                 // 恢复初始值
                 BookSelected = AccountBooks.FirstOrDefault();
                 VoucherSelected = VoucherGroups.FirstOrDefault();
@@ -249,6 +292,8 @@ namespace KISHelper.ViewModels
 
             if (dialog.ShowDialog() != true) return;
 
+            IsImporting = true;
+
             _filePath = Path.GetDirectoryName(dialog.FileName);
 
             try
@@ -270,6 +315,10 @@ namespace KISHelper.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show($"导入失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsImporting = false;
             }
         }
 
@@ -296,13 +345,14 @@ namespace KISHelper.ViewModels
         {
             var summary = RightBills
                 .Where(b => b.IsSelected)
-                .GroupBy(b => new { b.AccType, b.AccNumber, b.DetailID_FFlex6, b.DetailID_FFlex5 })
+                .GroupBy(b => new { b.AccType, b.AccNumber, b.DetailID_FFlex6, b.DetailID_FFlex5,b.DetailID_FFlex9 })
                 .Select(g => new BillInfo
                 {
                     AccType = g.Key.AccType,
                     AccNumber = g.Key.AccNumber,
                     DetailID_FFlex6 = g.Key.DetailID_FFlex6,
                     DetailID_FFlex5 = g.Key.DetailID_FFlex5,
+                    DetailID_FFlex9=g.Key.DetailID_FFlex9,
                     AMOUNT = g.Sum(b => b.AMOUNT)
                 })
                 .ToList();
@@ -324,23 +374,31 @@ namespace KISHelper.ViewModels
 
         private void OnExport()
         {
-            if (string.IsNullOrEmpty(_filePath))
+            try
             {
-                MessageBox.Show("请先导入Excel文件！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                IsExporting = true;
+                if (string.IsNullOrEmpty(_filePath))
+                {
+                    MessageBox.Show("请先导入Excel文件！", "提示", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                NpoiHelper.WriteToExcel(ConvertKIS.Entities.ToList(),
+                    Path.Combine(_filePath, "引入数据.xlsx"),
+                    "凭证#单据头(FBillHead)");
+
+                if (NpoiHelper.IsExported)
+                {
+                    SaveBills.Clear();
+                    ConvertKIS.Clear();
+                    MessageBox.Show($"已导出文件：{_filePath}\\引入数据.xlsx");
+                }
+            }
+            finally
+            {
+                IsExporting = false;
             }
 
-            NpoiHelper.WriteToExcel(ConvertKIS.Entities.ToList(),
-                Path.Combine(_filePath, "引入数据.xlsx"),
-                "凭证#单据头(FBillHead)");
-
-            if (NpoiHelper.IsExported) 
-            {
-                SaveBills.Clear();
-                ConvertKIS.Clear();
-                MessageBox.Show($"已导出文件：{_filePath}\\引入数据.xlsx");
-            }
-            
         }
 
         #endregion

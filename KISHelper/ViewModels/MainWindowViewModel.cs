@@ -25,6 +25,7 @@ namespace KISHelper.ViewModels
 
         private void OnNavigate(string pageName)
         {
+
             Navigator.NavigateTo(pageName); // 直接传递名称
 
             if (pageName == "Home")

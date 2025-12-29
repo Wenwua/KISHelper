@@ -3,41 +3,68 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:vm="clr-namespace:KISHelper.ViewModels"
         xmlns:views="clr-namespace:KISHelper.Views"
         xmlns:local="clr-namespace:KISHelper"
         mc:Ignorable="d"
-        Title="KISHelper" Height="450" Width="800">
-    <Window.DataContext>
-        <vm:MainWindowViewModel/>
-    </Window.DataContext>
-
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-
-        <!-- 导航按钮区域 -->
-        <StackPanel Orientation="Horizontal" Grid.Row="0">
-            <Button Content="首页" Command="{Binding NavigateCommand}" CommandParameter="Home" Style="{StaticResource BaseButtonStyle}"/>
-            <Button Content="设置" Command="{Binding NavigateCommand}" CommandParameter="Settings" Style="{StaticResource BaseButtonStyle}"/>
-            <Button Content="关于"  Command="{Binding NavigateCommand}" CommandParameter="About" Style="{StaticResource BaseButtonStyle}"/>
-        </StackPanel>
-
-        <!-- 页面内容区域 -->
-        <ContentControl Grid.Row="1" Content="{Binding Navigator.CurrentView}">
-            <ContentControl.Resources>
-                <DataTemplate DataType="{x:Type vm:HomeViewModel}">
-                    <views:HomeView/>
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
-                    <views:SettingsView/>
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type vm:AboutViewModel}">
-                    <views:AboutView/>
-                </DataTemplate>
-            </ContentControl.Resources>
-        </ContentControl>
-    </Grid>
+        Title="KISHelper"
+        WindowState="Maximized"
+        Height="450"
+        Width="800">
+	<Window.DataContext>
+		<vm:MainWindowViewModel/>
+	</Window.DataContext>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
+		<!-- 导航按钮区域 -->
+		<StackPanel Orientation="Horizontal"
+		            Grid.Row="0">
+			<Button Command="{Binding NavigateCommand}"
+			        CommandParameter="Home"
+			        Style="{StaticResource MaterialDesignFlatButton}">
+				<StackPanel Orientation="Horizontal">
+					<materialDesign:PackIcon Kind="Home"/>
+					<TextBlock Margin="4,0,0,0"
+					           Text="主页"/>
+				</StackPanel>
+			</Button>
+			<Button Command="{Binding NavigateCommand}"
+			        CommandParameter="Settings"
+			        Style="{StaticResource MaterialDesignFlatButton}">
+				<StackPanel Orientation="Horizontal">
+					<materialDesign:PackIcon Kind="Cog"/>
+					<TextBlock Margin="4,0,0,0"
+					           Text="设置"/>
+				</StackPanel>
+			</Button>
+			<Button Command="{Binding NavigateCommand}"
+			        CommandParameter="About"
+			        Style="{StaticResource MaterialDesignFlatButton}">
+				<StackPanel Orientation="Horizontal">
+					<materialDesign:PackIcon Kind="Information"/>
+					<TextBlock Margin="4,0,0,0"
+					           Text="关于"/>
+				</StackPanel>
+			</Button>
+		</StackPanel>
+		<!-- 页面内容区域 -->
+		<ContentControl Grid.Row="1"
+		                Content="{Binding Navigator.CurrentView}">
+			<ContentControl.Resources>
+				<DataTemplate DataType="{x:Type vm:HomeViewModel}">
+					<views:HomeView/>
+				</DataTemplate>
+				<DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+					<views:SettingsView/>
+				</DataTemplate>
+				<DataTemplate DataType="{x:Type vm:AboutViewModel}">
+					<views:AboutView/>
+				</DataTemplate>
+			</ContentControl.Resources>
+		</ContentControl>
+	</Grid>
 </Window>

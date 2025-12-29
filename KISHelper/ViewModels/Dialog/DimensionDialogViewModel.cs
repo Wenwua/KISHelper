@@ -11,7 +11,7 @@ namespace KISHelper.ViewModels.Dialog
     public class DimensionDialogViewModel : DialogViewModelBase
     {
         #region 必需参数
-        private AccDimension? accDimension;
+        private AccDimension? accDimension=new();
         public AccDimension? AccDimension
         {
             get => accDimension;

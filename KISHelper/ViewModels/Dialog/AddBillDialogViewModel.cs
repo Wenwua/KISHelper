@@ -49,6 +49,13 @@ namespace KISHelper.ViewModels.Dialog
             set => SetField(ref customDimension, value);
         }
 
+        private ObservableCollection<AccDimension>? costItemDimension;
+        public ObservableCollection<AccDimension>? CostItemDimension
+        {
+            get => costItemDimension;
+            set => SetField(ref costItemDimension, value);
+        }
+
         private bool allowDetailID_FFlex5;
         public bool AllowDetailID_FFlex5
         {
@@ -64,6 +71,13 @@ namespace KISHelper.ViewModels.Dialog
         {
             get => allowDetailID_FFlex6;
             set => SetField(ref allowDetailID_FFlex6, value);
+        }
+
+        private bool allowDetailID_FFlex9;
+        public bool AllowDetailID_FFlex9
+        {
+            get => allowDetailID_FFlex9;
+            set => SetField(ref allowDetailID_FFlex9, value);
         }
 
         private AccRule? accRuleSelected;
@@ -83,7 +97,7 @@ namespace KISHelper.ViewModels.Dialog
                     
                 }
                 AllowDetailID_FFlex6 = value?.AccFiexItem?.Contains("客户") ?? false;
-
+                AllowDetailID_FFlex9 = value?.AccFiexItem?.Contains("费用项目") ?? false;
             }
         }
 
@@ -111,6 +125,18 @@ namespace KISHelper.ViewModels.Dialog
             }
         }
 
+        private AccDimension? costItemSelected;
+        public AccDimension? CostItemSelected
+        {
+            get => costItemSelected;
+            set
+            {
+                SetField(ref costItemSelected, value);
+                if (BillInfo != null)
+                    BillInfo.DetailID_FFlex9 = value?.DimensionName;
+            }
+        }
+
         #endregion
 
         private readonly DataRepository _repository = new();
@@ -135,6 +161,10 @@ namespace KISHelper.ViewModels.Dialog
             filteredList = AccDimension.Where(d => d.DimensionType == "客户").ToList();
 
             CustomDimension = new ObservableCollection<AccDimension>(filteredList);
+
+            filteredList = AccDimension.Where(d => d.DimensionType == "费用项目").ToList();
+
+            CostItemDimension = new ObservableCollection<AccDimension>(filteredList);
         }
 
         public RelayCommand OKCommand { get; }

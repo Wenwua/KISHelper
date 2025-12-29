@@ -1,77 +1,93 @@
 ﻿<UserControl x:Class="KISHelper.Views.HomeView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:local="clr-namespace:KISHelper.Views"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
-    <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-    </UserControl.Resources>
+             mc:Ignorable="d"
+             d:DesignHeight="800"
+             d:DesignWidth="800">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="auto"/>
-            <RowDefinition/>
-        </Grid.RowDefinitions>
-
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Border Grid.RowSpan="1" Grid.ColumnSpan="2" Background="Transparent" BorderThickness="1" Margin="10" BorderBrush="LightGray">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition/>
-                    <RowDefinition/>
-                </Grid.RowDefinitions>
-
-
-                <StackPanel Margin="5,10" VerticalAlignment="Center" HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Text="核算组织" VerticalAlignment="Center" Margin="5,0"/>
-                    <ComboBox  Margin="5,0,20,0" Width="250" ItemsSource="{Binding AccountBooks}" DisplayMemberPath="Name" 
-                               SelectedItem="{Binding BookSelected}"/>
-                    <TextBlock Text="记账日期" VerticalAlignment="Center" Margin="5,0"/>
-                    <DatePicker FontSize="12" Margin="5,0,10,0" Width="200" SelectedDate="{Binding AccDate}" SelectedDateFormat="Short" />
+        <Grid Grid.Column="0"
+		      Margin="5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <GroupBox Padding="10"
+			          Header="账簿信息">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Text="核算组织："
+					           VerticalAlignment="Center"
+					           FontSize="14"
+					           FontWeight="Bold"
+					           Margin="0,5,0,10"/>
+                    <ComboBox ItemsSource="{Binding AccountBooks, Mode=TwoWay}"
+					          DisplayMemberPath="Name"
+					          SelectedItem="{Binding BookSelected}"/>
+                    <TextBlock Text="记账日期:"
+					           VerticalAlignment="Center"
+					           FontSize="14"
+					           FontWeight="Bold"
+					           Margin="0,20,0,10"/>
+                    <DatePicker FontSize="12"
+					            SelectedDate="{Binding AccDate}"
+					            SelectedDateFormat="Short"/>
+                    <TextBlock Text="凭证字:"
+					           VerticalAlignment="Center"
+					           FontSize="14"
+					           FontWeight="Bold"
+					           Margin="0,20,0,10"/>
+                    <ComboBox ItemsSource="{Binding VoucherGroups}"
+					          DisplayMemberPath="Name"
+					          SelectedItem="{Binding VoucherSelected}"/>
+                    <TextBlock Text="账号:"
+					           VerticalAlignment="Center"
+					           FontSize="14"
+					           FontWeight="Bold"
+					           Margin="0,20,0,10"/>
+                    <ComboBox ItemsSource="{Binding BankList}"
+					          DisplayMemberPath="DimensionName"
+					          SelectedItem="{Binding BankSelected}"/>
                 </StackPanel>
-
-                <StackPanel Grid.Row="1" Margin="5,10" VerticalAlignment="Center" HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Text="凭证字" VerticalAlignment="Center" Margin="5,0"/>
-                    <ComboBox  Margin="5,0,20,0" Width="80" ItemsSource="{Binding VoucherGroups}" DisplayMemberPath="Name" 
-                               SelectedItem="{Binding VoucherSelected}"/>
-                    <TextBlock Text="账号" VerticalAlignment="Center" Margin="5,0"/>
-                    <ComboBox  Margin="5,0,10,0" Width="120" ItemsSource="{Binding BankList}" DisplayMemberPath="DimensionName" 
-                               SelectedItem="{Binding BankSelected}"/>
-                    <Button Content="查询" Width="60" Margin="40,0,10,0" Command="{Binding FilterCommand}"/>
-                    <Button Content="保存" Width="60" Margin="10,0" Command="{Binding SaveBillCommand}"/>
-                    <Button Content="导出" Width="60" Margin="10,0" Command="{Binding ExportBillCommand}" />
-                </StackPanel>
-
-            </Grid>
-        </Border>
-
-        <Border Grid.Row="1" Background="Transparent" BorderThickness="1" Margin="10,5" BorderBrush="LightGray">
-            <Grid>
-                <TextBox x:Name="MyTextBox" AcceptsReturn="True" Padding="5" Text="{Binding QuickSearchText}"/>
-                <TextBlock Text="请输入凭证号，多个请换行" 
-                   Margin="10,5" 
-                   Foreground="Gray" 
-                   IsHitTestVisible="False">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Text, ElementName=MyTextBox}" Value="">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-            </Grid>
-        </Border>
-
-        <Grid Grid.Row="1" Grid.Column="1" Margin="5,5,10,5">
+            </GroupBox>
+            <GroupBox Header="查询信息"
+			          Margin="0,10"
+			          Grid.Row="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBox MinHeight="60"
+					         AcceptsReturn="True"
+					         VerticalAlignment="Stretch"
+					         materialDesign:HintAssist.Hint="输入凭证号，来源单号，日期查询"
+					         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+					         TextWrapping="Wrap"
+					         VerticalScrollBarVisibility="Auto"
+					         Text="{Binding QuickSearchText}"/>
+                    <Button Margin="0,10,0,0"
+					        Grid.Row="1"
+					        Command="{Binding FilterCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Magnify"/>
+                            <TextBlock Margin="4,0,0,0"
+							           VerticalAlignment="Center"
+							           Text="查询"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </GroupBox>
+        </Grid>
+        <Grid Grid.Row="1"
+		      Grid.Column="1"
+		      Margin="0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
@@ -83,94 +99,186 @@
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
                 <ToolBar>
-                    <Button Content="导入Excel" Command="{Binding ImportExcelCommand}" Height="30" Margin="5"/>
-                    <Button Content="→" Command="{Binding MoveSelectedToRightCommand}" Height="30" Width="30" Margin="5"/>
+                    <Button materialDesign:ButtonProgressAssist.IsIndeterminate="{Binding IsImporting}"
+					        materialDesign:ButtonProgressAssist.IsIndicatorVisible="{Binding IsImporting}"
+					        materialDesign:ButtonProgressAssist.Value="-1"
+					        Command="{Binding ImportExcelCommand}"
+					        materialDesign:ButtonAssist.CornerRadius="0"
+					        Style="{StaticResource MaterialDesignFlatButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Import"/>
+                            <TextBlock Margin="4,0,0,0"
+							           VerticalAlignment="Center"
+							           Text="导入"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Content="{materialDesign:PackIcon Kind=ArrowRight}"
+					        Command="{Binding MoveSelectedToRightCommand}"
+					        materialDesign:ButtonAssist.CornerRadius="0"
+					        Style="{StaticResource MaterialDesignFlatButton}"/>
                 </ToolBar>
-                <DataGrid Grid.Row="1" ItemsSource="{Binding LeftBills}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                          GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}"
-                          RowHeight="30" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                <DataGrid Grid.Row="1"
+				          ItemsSource="{Binding LeftBills}"
+				          AutoGenerateColumns="False"
+				          CanUserAddRows="False"
+				          IsReadOnly="True"
+				          GridLinesVisibility="None"
+				          CellStyle="{StaticResource DataGridCellStyle}"
+				          RowStyle="{StaticResource DataGridRowStyle}"
+				          RowHeight="30"
+				          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+				          ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <DataGrid.InputBindings>
-                        <MouseBinding Gesture="LeftDoubleClick" 
-                                    Command="{Binding MoveItemToRightCommand}" 
-                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=DataGrid}, Path=SelectedItem}"/>
+                        <MouseBinding Gesture="LeftDoubleClick"
+						              Command="{Binding MoveItemToRightCommand}"
+						              CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=DataGrid}, Path=SelectedItem}"/>
                     </DataGrid.InputBindings>
                     <DataGrid.Columns>
-                        <DataGridCheckBoxColumn Header="选择" 
-                                Binding="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                IsReadOnly="False"
-                                Width="50"
-                                ElementStyle="{StaticResource CenteredCheckBoxStyle}"/>
-                        <DataGridTextColumn Header="凭证号" Binding="{Binding AccNumber}" Width="120"/>
-                        <DataGridTextColumn Header="来源单号" Binding="{Binding BillWayNumber}" Width="120"/>
-                        <DataGridTextColumn Header="核销类型" Binding="{Binding AccType}" Width="80"/>
-                        <DataGridTextColumn Header="客户" Binding="{Binding DetailID_FFlex6}" Width="100"/>
-                        <DataGridTextColumn Header="部门" Binding="{Binding DetailID_FFlex5}" Width="100"/>
-                        <DataGridTextColumn Header="核销金额" Binding="{Binding AMOUNT}" Width="80"/>
-                        <DataGridTextColumn Header="核销日期" Binding="{Binding TRANSDATE}" Width="100"/>
+                        <DataGridCheckBoxColumn Header="选择"
+						                        Binding="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+						                        IsReadOnly="False"
+						                        Width="60"
+						                        ElementStyle="{StaticResource CenteredCheckBoxStyle}"/>
+                        <DataGridTextColumn Header="凭证号"
+						                    Binding="{Binding AccNumber}"
+						                    Width="160"/>
+                        <DataGridTextColumn Header="来源单号"
+						                    Binding="{Binding BillWayNumber}"
+						                    Width="180"/>
+                        <DataGridTextColumn Header="核销类型"
+						                    Binding="{Binding AccType}"
+						                    Width="120"/>
+                        <DataGridTextColumn Header="客户"
+						                    Binding="{Binding DetailID_FFlex6}"
+						                    Width="180"/>
+                        <DataGridTextColumn Header="部门"
+						                    Binding="{Binding DetailID_FFlex5}"
+						                    Width="150"/>
+                        <DataGridTextColumn Header="核销金额"
+						                    Binding="{Binding AMOUNT}"
+						                    Width="90"/>
+                        <DataGridTextColumn Header="核销日期"
+						                    Binding="{Binding TRANSDATE}"
+						                    Width="150"/>
                     </DataGrid.Columns>
                 </DataGrid>
-                <StackPanel Grid.Row="2" 
-                    Orientation="Horizontal" 
-                    Background="#F5F5F5">
-                    <TextBlock Text="合计金额:" 
-                       FontWeight="Bold" 
-                       Margin="10,5"/>
-                    <TextBlock Text="{Binding LeftTotalAmount}" 
-                       Foreground="Red"
-                       FontSize="14" 
-                       FontWeight="Bold"
-                       Margin="4"/>
+                <StackPanel Grid.Row="2"
+				            Orientation="Horizontal"
+				            Background="#F5F5F5">
+                    <TextBlock Text="合计金额:"
+					           FontWeight="Bold"
+					           Margin="10,5"/>
+                    <TextBlock Text="{Binding LeftTotalAmount}"
+					           Foreground="Red"
+					           FontSize="14"
+					           FontWeight="Bold"
+					           Margin="4"/>
                 </StackPanel>
             </Grid>
-
-            <Grid Grid.Column="1" Margin="5,0,0,0">
+            <Grid Grid.Column="1"
+			      Margin="0,0,5,0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
                     <RowDefinition/>
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
                 <ToolBar>
-                    <Button Content="添加分录" Command="{Binding AddBillCommand}"  Height="30" Margin="5"/>
-                    <Button Content="←" Command="{Binding MoveSelectedToLeftCommand}" Height="30" Width="30" Margin="5"/>
+                    <Button materialDesign:ButtonAssist.CornerRadius="0"
+					        Style="{StaticResource MaterialDesignFlatButton}"
+					        Command="{Binding AddBillCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Plus"/>
+                            <TextBlock Margin="4,0,0,0"
+							           VerticalAlignment="Center"
+							           Text="添加"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Content="{materialDesign:PackIcon Kind=ArrowLeft}"
+					        materialDesign:ButtonAssist.CornerRadius="0"
+					        Style="{StaticResource MaterialDesignFlatButton}"
+					        Command="{Binding MoveSelectedToLeftCommand}"/>
+                    <Button materialDesign:ButtonAssist.CornerRadius="0"
+					        Style="{StaticResource MaterialDesignFlatButton}"
+					        Command="{Binding SaveBillCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ContentSaveOutline"/>
+                            <TextBlock Margin="4,0,0,0"
+							           VerticalAlignment="Center"
+							           Text="保存"/>
+                        </StackPanel>
+                    </Button>
+                    <Button materialDesign:ButtonProgressAssist.IsIndeterminate="{Binding IsExporting}"
+					        materialDesign:ButtonProgressAssist.IsIndicatorVisible="{Binding IsExporting}"
+					        materialDesign:ButtonProgressAssist.Value="-1"
+							materialDesign:ButtonAssist.CornerRadius="0"
+					        Style="{StaticResource MaterialDesignFlatButton}"
+					        Command="{Binding ExportBillCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Export"/>
+                            <TextBlock Margin="4,0,0,0"
+							           VerticalAlignment="Center"
+							           Text="导出"/>
+                        </StackPanel>
+                    </Button>
                 </ToolBar>
-                <DataGrid Grid.Row="1" ItemsSource="{Binding RightBills}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-              GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}"
-              RowHeight="30" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                <DataGrid Grid.Row="1"
+				          ItemsSource="{Binding RightBills}"
+				          AutoGenerateColumns="False"
+				          CanUserAddRows="False"
+				          IsReadOnly="True"
+				          GridLinesVisibility="None"
+				          CellStyle="{StaticResource DataGridCellStyle}"
+				          RowStyle="{StaticResource DataGridRowStyle}"
+				          RowHeight="30"
+				          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+				          ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <DataGrid.InputBindings>
-                        <MouseBinding Gesture="LeftDoubleClick" 
-                                    Command="{Binding MoveItemToLeftCommand}" 
-                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=DataGrid}, Path=SelectedItem}"/>
+                        <MouseBinding Gesture="LeftDoubleClick"
+						              Command="{Binding MoveItemToLeftCommand}"
+						              CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=DataGrid}, Path=SelectedItem}"/>
                     </DataGrid.InputBindings>
                     <DataGrid.Columns>
-                        <DataGridCheckBoxColumn Header="选择" 
-                    Binding="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    IsReadOnly="False"
-                    Width="50"
-                    ElementStyle="{StaticResource CenteredCheckBoxStyle}"/>
-                        <DataGridTextColumn Header="凭证号" Binding="{Binding AccNumber}" Width="120"/>
-                        <DataGridTextColumn Header="来源单号" Binding="{Binding BillWayNumber}" Width="120"/>
-                        <DataGridTextColumn Header="核销类型" Binding="{Binding AccType}" Width="80"/>
-                        <DataGridTextColumn Header="客户" Binding="{Binding DetailID_FFlex6}" Width="100"/>
-                        <DataGridTextColumn Header="部门" Binding="{Binding DetailID_FFlex5}" Width="100"/>
-                        <DataGridTextColumn Header="核销金额" Binding="{Binding AMOUNT}" Width="80"/>
-                        <DataGridTextColumn Header="核销日期" Binding="{Binding TRANSDATE}" Width="100"/>
+                        <DataGridCheckBoxColumn Header="选择"
+						                        Binding="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+						                        IsReadOnly="False"
+						                        Width="60"
+						                        ElementStyle="{StaticResource CenteredCheckBoxStyle}"/>
+                        <DataGridTextColumn Header="凭证号"
+						                    Binding="{Binding AccNumber}"
+						                    Width="160"/>
+                        <DataGridTextColumn Header="来源单号"
+						                    Binding="{Binding BillWayNumber}"
+						                    Width="180"/>
+                        <DataGridTextColumn Header="核销类型"
+						                    Binding="{Binding AccType}"
+						                    Width="120"/>
+                        <DataGridTextColumn Header="客户"
+						                    Binding="{Binding DetailID_FFlex6}"
+						                    Width="180"/>
+                        <DataGridTextColumn Header="部门"
+						                    Binding="{Binding DetailID_FFlex5}"
+						                    Width="150"/>
+                        <DataGridTextColumn Header="核销金额"
+						                    Binding="{Binding AMOUNT}"
+						                    Width="90"/>
+                        <DataGridTextColumn Header="核销日期"
+						                    Binding="{Binding TRANSDATE}"
+						                    Width="150"/>
                     </DataGrid.Columns>
                 </DataGrid>
-                <StackPanel Grid.Row="2" 
-        Orientation="Horizontal" 
-        Background="#F5F5F5">
-                    <TextBlock Text="合计金额:" 
-           FontWeight="Bold" 
-           Margin="10,5"/>
-                    <TextBlock Text="{Binding RightTotalAmount}" 
-           Foreground="Red"
-           FontSize="14" 
-           FontWeight="Bold"
-           Margin="4"/>
+                <StackPanel Grid.Row="2"
+				            Orientation="Horizontal"
+				            Background="#F5F5F5">
+                    <TextBlock Text="合计金额:"
+					           FontWeight="Bold"
+					           Margin="10,5"/>
+                    <TextBlock Text="{Binding RightTotalAmount}"
+					           Foreground="Red"
+					           FontSize="14"
+					           FontWeight="Bold"
+					           Margin="4"/>
                 </StackPanel>
             </Grid>
-
-
         </Grid>
     </Grid>
 </UserControl>

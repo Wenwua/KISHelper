@@ -345,6 +345,20 @@ namespace KISHelper.Common
                     if (result.Any()) { entity.FDetailID_FFlex4 = result[0].DimensionNumber; }
                 }
 
+                //费用项目
+                if (AccFiexItem.Contains("费用项目"))
+                {
+                    KeyStr = item.DetailID_FFlex9;
+                    var result = AccDimension
+                    .Where(b => b.DimensionType == "费用项目" && b.DimensionName == KeyStr)
+                    .Select(b => new
+                    {
+                        b.DimensionNumber
+                    }).ToList();
+
+                    if (result.Any()) { entity.FDetailID_FFLEX9 = result[0].DimensionNumber; }
+                }
+
                 entity.FCURRENCYID = "PRE001";
                 entity.FEXCHANGERATETYPE = "HLTX01_SYS";
 
@@ -368,6 +382,7 @@ namespace KISHelper.Common
             if (voucherInfo.Bank.BankDimension.Contains("客户")) { TotalEntity.FDetailID_FFlex6 = voucherInfo.Bank.DimensionNumber; }
             if (voucherInfo.Bank.BankDimension.Contains("部门")) { TotalEntity.FDetailID_FFlex5 = voucherInfo.Bank.DimensionNumber; }
             if (voucherInfo.Bank.BankDimension.Contains("供应商")) { TotalEntity.FDetailID_FFlex4 = voucherInfo.Bank.DimensionNumber; }
+            if (voucherInfo.Bank.BankDimension.Contains("费用项目")) { TotalEntity.FDetailID_FFLEX9 = voucherInfo.Bank.DimensionNumber; }
             TotalEntity.FCURRENCYID = "PRE001";
             TotalEntity.FEXCHANGERATETYPE = "HLTX01_SYS";
             TotalEntity.FAMOUNTFOR = Math.Abs(DEBITTotal - CREDITTotal).ToString();

@@ -33,6 +33,7 @@ namespace KISHelper.ViewModels.Dialog
                 }
             } 
         }
+
         private ObservableCollection<AccDimension>? accDimension;
         public ObservableCollection<AccDimension>? AccDimension
         {
@@ -69,7 +70,10 @@ namespace KISHelper.ViewModels.Dialog
             {
                 AccDimension = new ObservableCollection<AccDimension>(result);
             }
-            
+
+            AccRule = new AccRule();
+
+
         }
 
         #region 过程
