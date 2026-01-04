@@ -100,6 +100,8 @@ namespace KISHelper.Common
         private string? dimensionNumber;
         private string? accId;
         private string? bankDimension;
+        private string? branch;
+        private string? interior;
 
         //维度类型
         [ExcelColumn("维度类型", Order = 1)]
@@ -142,6 +144,25 @@ namespace KISHelper.Common
             get => bankDimension;
             set => SetField(ref bankDimension, value);
         }
+
+        //所属部门---平台公司需要将所有维度核算到部门
+        [ExcelColumn("所属部门", Order = 6)]
+        public string? Branch
+
+        {
+            get => branch;
+            set => SetField(ref branch, value);
+        }
+
+        //往来科目---当涉及平台公司内部挂账需要指定往来客户
+        [ExcelColumn("往来客户", Order = 7)]
+        public string? Interior
+
+        {
+            get => interior;
+            set => SetField(ref interior, value);
+        }
+
     }
 
     public class VoucherInfo

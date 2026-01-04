@@ -88,7 +88,11 @@ namespace KISHelper.ViewModels.Dialog
             {
                 SetField(ref accRuleSelected, value);
                 if (BillInfo != null)
+                { 
                     BillInfo.AccType = value?.AccName;
+                    BillInfo.BalanceDirection = value?.AccFDC;
+                }
+
                 if (value!=null && value.AccFiexItem!= null && value.AccFiexItem.Contains("部门"))
                 {
                     AllowDetailID_FFlex5 = true;

@@ -69,7 +69,8 @@ namespace KISHelper.ViewModels.Settings
 
         private void ExecuteEditDimension()
         {
-            if (SelectedItem == null) return;
+            if (selectedItem == null) return;
+            var clone = selectedItem.DeepClone();
             var dialog = new DimensionDialog()
             {
                 Owner = Application.Current.MainWindow,
@@ -78,11 +79,12 @@ namespace KISHelper.ViewModels.Settings
             var vm = dialog.DataContext as DimensionDialogViewModel;
             if (vm != null)
             {
-                vm.AccDimension = SelectedItem;
+                vm.AccDimension = clone;
             }
             if (dialog.ShowDialog() == true && vm != null && vm.AccDimension != null)
             {
-                SelectedItem = vm.AccDimension;
+                var idx = AccDimension.IndexOf(SelectedItem);
+                AccDimension[idx] = vm.AccDimension;
                 SaveAllData();
             }
         }

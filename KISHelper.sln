@@ -5,6 +5,8 @@ VisualStudioVersion = 17.9.34701.34
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KISHelper", "KISHelper\KISHelper.csproj", "{DDDEAA13-FE38-44E5-9B9F-BBFBB31E7CB5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Updater", "Updater\Updater.csproj", "{AE453CAD-31B3-41A8-9518-2B6B8F7C282F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{DDDEAA13-FE38-44E5-9B9F-BBFBB31E7CB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDDEAA13-FE38-44E5-9B9F-BBFBB31E7CB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDDEAA13-FE38-44E5-9B9F-BBFBB31E7CB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE453CAD-31B3-41A8-9518-2B6B8F7C282F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE453CAD-31B3-41A8-9518-2B6B8F7C282F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE453CAD-31B3-41A8-9518-2B6B8F7C282F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE453CAD-31B3-41A8-9518-2B6B8F7C282F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

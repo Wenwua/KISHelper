@@ -68,7 +68,8 @@ namespace KISHelper.ViewModels.Settings
 
         private void ExecuteEditRule()
         {
-            if (SelectedItem == null) return;
+            if (selectedItem == null) return;
+            var clone = selectedItem.DeepClone();
             var dialog = new RuleDialog() 
             {
                 Owner = Application.Current.MainWindow,
@@ -77,11 +78,12 @@ namespace KISHelper.ViewModels.Settings
             var vm = dialog.DataContext as RuleDialogViewModel;
             if (vm != null)
             {
-                vm.AccRule = SelectedItem;
+                vm.AccRule = clone;
             }
             if (dialog.ShowDialog() == true && vm != null && vm.AccRule != null)
             {
-                SelectedItem = vm.AccRule;
+                var idx = AccRules.IndexOf(SelectedItem); 
+                AccRules[idx] = vm.AccRule;
                 SaveAllData();
             }
         }

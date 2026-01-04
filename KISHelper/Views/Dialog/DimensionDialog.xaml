@@ -3,42 +3,82 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
-        Title="编辑" SizeToContent="WidthAndHeight" WindowStartupLocation="CenterOwner">
+        Title="编辑"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner">
     <StackPanel Margin="15">
-        <TextBlock Text="维度类型:" Margin="0,0,0,5"/>
-        <ComboBox x:Name="TypeBox" Text="{Binding AccDimension.DimensionType}" MinWidth="250" Margin="0,0,0,10">
+        <TextBlock Text="维度类型:"
+		           Margin="0,0,0,5"/>
+        <ComboBox Text="{Binding AccDimension.DimensionType}"
+		          MinWidth="250"
+		          Margin="0,0,0,10">
             <ComboBoxItem Content="客户"/>
             <ComboBoxItem Content="部门"/>
             <ComboBoxItem Content="供应商"/>
             <ComboBoxItem Content="银行账号"/>
             <ComboBoxItem Content="费用项目"/>
         </ComboBox>
-
-        <TextBlock Text="维度名称:" Margin="0,0,0,5"/>
-        <TextBox Text="{Binding AccDimension.DimensionName}" MinWidth="250" Margin="0,0,0,15"/>
-
-        <TextBlock Text="维度编码:" Margin="0,0,0,5"/>
-        <TextBox Text="{Binding AccDimension.DimensionNumber}" MinWidth="250" Margin="0,0,0,15"/>
-
-        <TextBlock Text="银行科目:" Margin="0,0,0,5"/>
-        <TextBox x:Name="AccNumberTextBox" Text="{Binding AccDimension.AccID}" MinWidth="250" Margin="0,0,0,15">
-            <TextBox.Style>
-                <Style TargetType="TextBox">
-                    <Setter Property="IsEnabled" Value="False"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding ElementName=TypeBox, Path=Text}" Value="银行账号">
-                            <Setter Property="IsEnabled" Value="True"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </TextBox.Style>
-        </TextBox>
-        <TextBlock Text="银行维度:" Margin="0,0,0,5"/>
-        <TextBox Text="{Binding AccDimension.BankDimension}" MinWidth="250" Margin="0,0,0,15" IsEnabled="{Binding ElementName=AccNumberTextBox, Path=IsEnabled}"/>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="确定" IsDefault="True" Command="{Binding OKCommand}" MinWidth="75" Margin="5,0"/>
-            <Button Content="取消" IsCancel="True" Command="{Binding CancelCommand}" MinWidth="75" Margin="5,0"/>
+        <TextBlock Text="维度名称:"
+		           Margin="0,0,0,5"/>
+        <TextBox Text="{Binding AccDimension.DimensionName}"
+		         MinWidth="250"
+		         Margin="0,0,0,15"/>
+        <TextBlock Text="维度编码:"
+		           Margin="0,0,0,5"/>
+        <TextBox Text="{Binding AccDimension.DimensionNumber}"
+		         MinWidth="250"
+		         Margin="0,0,0,15"/>
+        <TextBlock Text="银行科目:"
+		           Margin="0,0,0,5"/>
+        <TextBox Text="{Binding AccDimension.AccID}"
+		         MinWidth="250"
+		         Margin="0,0,0,15"
+		         IsEnabled="{Binding IsAccID}"/>
+        <TextBlock Text="银行维度:"
+		           Margin="0,0,0,5"/>
+        <TextBox Text="{Binding AccDimension.BankDimension}"
+		         MinWidth="250"
+		         Margin="0,0,0,15"
+		         IsEnabled="{Binding IsAccID}"/>
+        <TextBlock Text="所属部门:"
+	           Margin="0,0,0,5"/>
+        <ComboBox ItemsSource="{Binding DpmDimension}" MinWidth="250" Margin="0,0,0,10" DisplayMemberPath="DimensionName" 
+          SelectedItem="{Binding DpmSelected}" IsEnabled="{Binding IsBanch}"/>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,5" >
+            <TextBlock Text="往来编码:"/>
+            <materialDesign:PopupBox Margin="5,0">
+                <materialDesign:PopupBox.ToggleContent>
+                    <materialDesign:PackIcon Width="15"
+		                         Height="{Binding ActualWidth, RelativeSource={RelativeSource Mode=Self}}"
+		                         Foreground="LightGray"
+		                         Kind="Information"/>
+                </materialDesign:PopupBox.ToggleContent>
+                <materialDesign:PopupBox.PopupContent>
+                    <Grid Width="312" Margin="16,12,16,8">
+                        <TextBlock Text="只有同一主体下，内部部门需要挂往来的才需要设置往来主体编码，如联营平台业务，其他主体留空即可。" FontSize="14"
+			           TextWrapping="Wrap"/>
+                    </Grid>
+                </materialDesign:PopupBox.PopupContent>
+            </materialDesign:PopupBox>
+        </StackPanel>
+        <TextBox Text="{Binding AccDimension.Interior}"
+		         MinWidth="250"
+		         Margin="0,0,0,15"
+		         IsEnabled="{Binding IsInterior}"/>
+        <StackPanel Orientation="Horizontal"
+		            HorizontalAlignment="Right">
+            <Button Content="确定"
+			        IsDefault="True"
+			        Command="{Binding OKCommand}"
+			        MinWidth="75"
+			        Margin="5,0"/>
+            <Button Content="取消"
+			        IsCancel="True"
+			        Command="{Binding CancelCommand}"
+			        MinWidth="75"
+			        Margin="5,0"/>
         </StackPanel>
     </StackPanel>
 </Window>

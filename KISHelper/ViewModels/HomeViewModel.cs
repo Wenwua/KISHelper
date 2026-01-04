@@ -73,13 +73,33 @@ namespace KISHelper.ViewModels
             }
         }
 
-        private double rightTotalAmount;
-        public double RightTotalAmount
+        private double bankTotalAmount;
+        public double BankTotalAmount
         {
-            get => rightTotalAmount;
+            get => bankTotalAmount;
             set
             {
-                SetField(ref rightTotalAmount, value);
+                SetField(ref bankTotalAmount, value);
+            }
+        }
+
+        private double debitTotalAmount;
+        public double DEBITTotalAmount
+        {
+            get => debitTotalAmount;
+            set
+            {
+                SetField(ref debitTotalAmount, value);
+            }
+        }
+
+        private double creditTotalAmount;
+        public double CREDITTotalAmount
+        {
+            get => creditTotalAmount;
+            set
+            {
+                SetField(ref creditTotalAmount, value);
             }
         }
 
@@ -151,10 +171,10 @@ namespace KISHelper.ViewModels
         {
             try
             {
-                AccountBooks.Clear();
-                VoucherGroups.Clear();
-                AccRules.Clear();
-                AccDimension.Clear();
+                AccountBooks!.Clear();
+                VoucherGroups!.Clear();
+                AccRules!.Clear();
+                AccDimension!.Clear();
                 var accbooks = _repository.LoadData<AccountBook>("AccountBooks").ToList();
                 foreach (var item in accbooks) { AccountBooks.Add(item); }
 
@@ -167,7 +187,7 @@ namespace KISHelper.ViewModels
                 var dimensions = _repository.LoadData<AccDimension>("AccDimension").ToList();
                 foreach (var item in dimensions) { AccDimension.Add(item); }
                 // 筛选银行账号
-                BankList.Clear();
+                BankList!.Clear();
                 var result = AccDimension.Where(a => a.DimensionType == "银行账号").ToList();
                 foreach (var item in result) { BankList.Add(item); }
                 // 恢复初始值
@@ -185,6 +205,7 @@ namespace KISHelper.ViewModels
         {
             var sw = Stopwatch.StartNew();
             // 清空旧筛选结果
+            if(LeftBills==null || RightBills == null) { return; }
             foreach(var bill in LeftBills)
             {
                 bill.PropertyChanged -= OnLeftBillPropertyChanged;
@@ -235,7 +256,9 @@ namespace KISHelper.ViewModels
         public void CalculateTotal()
         {
             LeftTotalAmount = LeftBills.Where(b => b.IsSelected).Sum(b => b.AMOUNT);
-            RightTotalAmount = RightBills.Where(b => b.IsSelected).Sum(b => b.AMOUNT);
+            DEBITTotalAmount = RightBills.Where(b => b.IsSelected && b.BalanceDirection == "借方").Sum(b => b.AMOUNT);
+            CREDITTotalAmount = RightBills.Where(b => b.IsSelected && b.BalanceDirection == "贷方").Sum(b => b.AMOUNT);
+            BankTotalAmount = Math.Abs(DEBITTotalAmount - CREDITTotalAmount);
         }
 
         private void OnLeftBillPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -304,9 +327,15 @@ namespace KISHelper.ViewModels
 
                 Application.Current.Dispatcher.Invoke(() =>
                 {
+                    if (AllBills == null) { return; }
                     AllBills.Clear();
+                    Dictionary<string, string> AccDic = AccRules.Where(r => r.AccName != null).ToDictionary(r => r.AccName!, r => r.AccFDC ??"");
                     foreach (var bill in bills)
                     {
+                        if (AccDic.TryGetValue(bill.AccType, out var AccFDC))
+                        {
+                            bill.BalanceDirection = AccFDC;
+                        }
                         AllBills.Add(bill);
                     }
                     ApplyFilter(); // 重新筛选
@@ -335,7 +364,8 @@ namespace KISHelper.ViewModels
                 vm.BillInfo.IsSelected = true;
                 vm.BillInfo.IsTemporary = true;
                 vm.BillInfo.PropertyChanged += OnLeftBillPropertyChanged;
-                RightBills.Add(vm.BillInfo);
+
+                RightBills!.Add(vm.BillInfo);
                 CalculateTotal();
             }
         }
@@ -345,7 +375,7 @@ namespace KISHelper.ViewModels
         {
             var summary = RightBills
                 .Where(b => b.IsSelected)
-                .GroupBy(b => new { b.AccType, b.AccNumber, b.DetailID_FFlex6, b.DetailID_FFlex5,b.DetailID_FFlex9 })
+                .GroupBy(b => new { b.AccType, b.AccNumber, b.DetailID_FFlex6, b.DetailID_FFlex5,b.DetailID_FFlex9, b.BalanceDirection})
                 .Select(g => new BillInfo
                 {
                     AccType = g.Key.AccType,
@@ -353,6 +383,7 @@ namespace KISHelper.ViewModels
                     DetailID_FFlex6 = g.Key.DetailID_FFlex6,
                     DetailID_FFlex5 = g.Key.DetailID_FFlex5,
                     DetailID_FFlex9=g.Key.DetailID_FFlex9,
+                    BalanceDirection=g.Key.BalanceDirection,
                     AMOUNT = g.Sum(b => b.AMOUNT)
                 })
                 .ToList();

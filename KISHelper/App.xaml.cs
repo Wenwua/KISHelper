@@ -1,4 +1,5 @@
 ﻿using KISHelper.Common;
+using KISHelper.License;
 using KISHelper.Services;
 using KISHelper.ViewModels;
 using KISHelper.ViewModels.Settings;
@@ -20,6 +21,7 @@ namespace KISHelper
 
             var navigator = NavigationService.Instance;
 
+            bool isdo;
 
             // 注册所有页面
             navigator.Register<HomeViewModel>("Home");
