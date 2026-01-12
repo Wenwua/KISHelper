@@ -18,7 +18,15 @@ namespace KISHelper.ViewModels.Dialog
         public BillInfo? BillInfo
         {
             get => billInfo;
-            set => SetField(ref billInfo, value);
+            set  
+            { 
+                SetField(ref billInfo, value);
+                if (accRules != null&&value!=null)
+                {
+                    AccRuleSelected = accRules.FirstOrDefault(a=> a.Affiliated == accountBook?.Name && a.AccName==value.AccType);
+                    DpmSelected = dpmDimension.FirstOrDefault(a => a.Affiliated == accountBook?.Name && a.DimensionType=="部门" && a.DimensionName==value.DetailID_FFlex5);
+                }
+            }
         }
 
         private ObservableCollection<AccRule>? accRules;
@@ -96,12 +104,24 @@ namespace KISHelper.ViewModels.Dialog
                 if (value!=null && value.AccFiexItem!= null && value.AccFiexItem.Contains("部门"))
                 {
                     AllowDetailID_FFlex5 = true;
-                    var result = DpmDimension.FirstOrDefault(a => a.DimensionName == value.DefaultDetailID_FFlex5);
-                    DpmSelected = result;
-                    
+                    if (billInfo != null && !string.IsNullOrWhiteSpace(billInfo.DetailID_FFlex5))
+                    {
+                        DpmSelected = DpmDimension.FirstOrDefault(a => a.Affiliated == accountBook?.Name && a.DimensionName == billInfo.DetailID_FFlex5);
+
+                    }
+                    else
+                    {
+                        DpmSelected = DpmDimension.FirstOrDefault(a => a.Affiliated == accountBook?.Name && a.DimensionName == value.DefaultDetailID_FFlex5);
+                    }
+                }
+                else
+                {
+                    DpmSelected = null;
                 }
                 AllowDetailID_FFlex6 = value?.AccFiexItem?.Contains("客户") ?? false;
                 AllowDetailID_FFlex9 = value?.AccFiexItem?.Contains("费用项目") ?? false;
+                if (!AllowDetailID_FFlex6) CustomSelected = null;
+                if (!AllowDetailID_FFlex9) CostItemSelected = null;
             }
         }
 
@@ -141,6 +161,16 @@ namespace KISHelper.ViewModels.Dialog
             }
         }
 
+        private AccountBook? accountBook;
+        public AccountBook? AccountBook 
+        {
+            get => accountBook;
+            set
+            {
+                SetField(ref accountBook, value);
+                Refresh();
+            }
+        }
         #endregion
 
         private readonly DataRepository _repository = new();
@@ -152,21 +182,29 @@ namespace KISHelper.ViewModels.Dialog
 
             CancelCommand = new RelayCommand(OnCancel);
 
-            AccRules = new ObservableCollection<AccRule>(
-                _repository.LoadData<AccRule>("AccRules"));
+            Refresh();
+        }
+
+        private void Refresh()
+        {
+            if (AccountBook == null) return;
+
+            var _accRules = _repository.LoadData<AccRule>("AccRules").Where(d=>d.Affiliated==AccountBook?.Name).ToList();
+
+            AccRules = new ObservableCollection<AccRule>(_accRules);
 
             AccDimension = new ObservableCollection<AccDimension>(
                 _repository.LoadData<AccDimension>("AccDimension"));
 
-            var filteredList = AccDimension.Where(d => d.DimensionType == "部门").ToList();
+            var filteredList = AccDimension.Where(d => d.DimensionType == "部门" && d.Affiliated == AccountBook?.Name).ToList();
 
             DpmDimension = new ObservableCollection<AccDimension>(filteredList);
 
-            filteredList = AccDimension.Where(d => d.DimensionType == "客户").ToList();
+            filteredList = AccDimension.Where(d => d.DimensionType == "客户" && d.Affiliated == AccountBook?.Name).ToList();
 
             CustomDimension = new ObservableCollection<AccDimension>(filteredList);
 
-            filteredList = AccDimension.Where(d => d.DimensionType == "费用项目").ToList();
+            filteredList = AccDimension.Where(d => d.DimensionType == "费用项目" && d.Affiliated == AccountBook?.Name).ToList();
 
             CostItemDimension = new ObservableCollection<AccDimension>(filteredList);
         }

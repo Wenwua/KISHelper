@@ -116,6 +116,10 @@
 					        Command="{Binding MoveSelectedToRightCommand}"
 					        materialDesign:ButtonAssist.CornerRadius="0"
 					        Style="{StaticResource MaterialDesignFlatButton}"/>
+                    <Button Content="合并数据"
+							Command="{Binding MergeDataCommand}"
+							materialDesign:ButtonAssist.CornerRadius="0"
+							Style="{StaticResource MaterialDesignFlatButton}"/>
                 </ToolBar>
                 <DataGrid Grid.Row="1"
 				          ItemsSource="{Binding LeftBills}"
@@ -193,6 +197,16 @@
 							           Text="添加"/>
                         </StackPanel>
                     </Button>
+                    <Button materialDesign:ButtonAssist.CornerRadius="0"
+							Style="{StaticResource MaterialDesignFlatButton}"
+							Command="{Binding EditBillCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Pencil"/>
+                            <TextBlock Margin="4,0,0,0"
+					           VerticalAlignment="Center"
+					           Text="修改"/>
+                        </StackPanel>
+                    </Button>
                     <Button Content="{materialDesign:PackIcon Kind=ArrowLeft}"
 					        materialDesign:ButtonAssist.CornerRadius="0"
 					        Style="{StaticResource MaterialDesignFlatButton}"
@@ -220,6 +234,16 @@
 							           Text="导出"/>
                         </StackPanel>
                     </Button>
+                    <Button materialDesign:ButtonAssist.CornerRadius="0"
+						Style="{StaticResource MaterialDesignFlatButton}"
+						Command="{Binding AddBankBillCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Cash"/>
+                            <TextBlock Margin="4,0,0,0"
+					           VerticalAlignment="Center"
+					           Text="资金调拨"/>
+                        </StackPanel>
+                    </Button>
                 </ToolBar>
                 <DataGrid Grid.Row="1"
 				          ItemsSource="{Binding RightBills}"
@@ -231,7 +255,8 @@
 				          RowStyle="{StaticResource DataGridRowStyle}"
 				          RowHeight="30"
 				          ScrollViewer.HorizontalScrollBarVisibility="Auto"
-				          ScrollViewer.VerticalScrollBarVisibility="Auto">
+				          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          SelectedItem="{Binding SelectedBillInfo}">
                     <DataGrid.InputBindings>
                         <MouseBinding Gesture="LeftDoubleClick"
 						              Command="{Binding MoveItemToLeftCommand}"

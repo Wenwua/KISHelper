@@ -34,6 +34,7 @@ namespace KISHelper
             }
             //检查更新
             await GitHubLicenseClient.CheckUpdate();
+            await GitHubLicenseClient.RefreshIfNeededAsync();
         }
     }
 

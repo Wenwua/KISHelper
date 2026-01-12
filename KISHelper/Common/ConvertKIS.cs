@@ -18,7 +18,7 @@ namespace KISHelper.Common
         public int VoucherIndex = 1;
 
         private int RowIndex = 1;
-        public ObservableCollection<Entity>? Entities { get; set; } = new();
+        public ObservableCollection<Entity>? Entities { get; set; }
         public void Clear()
         {
             VoucherIndex = 1;
@@ -31,16 +31,24 @@ namespace KISHelper.Common
 
         public ConvertKIS()
         {
+            Entities = new ObservableCollection<Entity>();
             InitializeComponent();
+
+            List<AccDimension> listDimension = _repository.LoadData<AccDimension>("AccDimension");
+            dicDimension = listDimension.ToDictionary(k => (k.Affiliated , k.DimensionType, k.DimensionName));
+
+            List<AccRule> listRules = _repository.LoadData<AccRule>("AccRules");
+            dicRules = listRules.ToDictionary(r => (r.Affiliated,r.AccName));
+
+            KeyStr = string.Empty;
+            AccFiexItem = string.Empty;
         }
 
         private readonly DataRepository _repository = new();
-        public ObservableCollection<AccRule>? AccRules { get; set; } = new();
-        public ObservableCollection<AccDimension>? AccDimension { get; set; } = new();
 
         private void InitializeComponent()
         {
-            Entities.Add(new Entity
+            Entities?.Add(new Entity
             {
                 GL_VOUCHER = "FBillHead(GL_VOUCHER)",
                 FAccountBookID = "FAccountBookID",
@@ -122,7 +130,7 @@ namespace KISHelper.Common
                 FBUSNO = "FBUSNO",
                 FEXPORTENTRYID = "FEXPORTENTRYID"
             });
-            Entities.Add(new Entity
+            Entities?.Add(new Entity
             {
                 GL_VOUCHER = "*单据头(序号)",
                 FAccountBookID = "*(单据头)账簿#编码",
@@ -204,209 +212,241 @@ namespace KISHelper.Common
                 FBUSNO = "(分录)业务编号",
                 FEXPORTENTRYID = "(分录)现金流量#分录ID"
             });
-            AccRules = new ObservableCollection<AccRule>(_repository.LoadData<AccRule>("AccRules"));
-            AccDimension = new ObservableCollection<AccDimension>(_repository.LoadData<AccDimension>("AccDimension"));
         }
 
         public void AddToKIS(ObservableCollection<BillInfo> billInfo, VoucherInfo voucherInfo)
         {
-            IsFinished = false;
-            double DEBITTotal = 0, CREDITTotal = 0;
-            foreach (var item in billInfo)
+            try
             {
-                //单据头设置
-                Entity entity = new Entity();
-                if (IsHeader)
+                IsFinished = false;
+                IsHeader = true;
+                AddBankBillInfo(billInfo, voucherInfo);
+                //验证内部往来
+                VerifyInterior(billInfo, voucherInfo);
+                foreach (var item in billInfo)
                 {
-                    entity.GL_VOUCHER = (10000 + VoucherIndex).ToString();
-                    entity.FAccountBookID = voucherInfo?.Book?.Id;
-                    entity.FDate = voucherInfo?.Date.ToString("yyyy/MM/dd");
-                    entity.FYEAR = voucherInfo?.Date.Year.ToString();
-                    entity.FPERIOD = voucherInfo?.Date.Month.ToString();
-                    entity.FVOUCHERGROUPID = voucherInfo?.Voucher?.Id;
-                    entity.FVOUCHERGROUPNO = VoucherIndex.ToString();
-                    entity.FACCBOOKORGID = voucherInfo?.Book?.Id;
-                }
-                IsHeader = false;
-                entity.FEntity = RowIndex.ToString();
-
-                var ruleResult = AccRules
-                    .Where(b => b.AccName == item.AccType)
-                    .Select(b => new
-                    {
-                        b.AccountID,
-                        b.AccFDC,
-                        b.AccFiexItem
-                    }).ToList();
-
-                if (ruleResult.Any())
-                {
+                    Entity entity = new Entity();
+                    WriteHeader(entity, voucherInfo);
+                    entity.FEntity = RowIndex.ToString();
+                    entity.FEXPLANATION = GetFEXPLANATION(item, voucherInfo);
+                    entity.FAccountID = GetAccID(item, voucherInfo);//获取科目要放在获取核算维度之前，需要通过科目确认核算维度
+                    entity.FDetailID_FFlex6 = GetCustom(item, voucherInfo);
+                    entity.FDetailID_FFlex5 = GetDepartment(item, voucherInfo);
+                    entity.FDetailID_FFlex4 = GetOrder(item, voucherInfo);
+                    entity.FDetailID_FFLEX9 = GetExpense(item, voucherInfo);
+                    entity.FDetailID_FF100009 = GetBank(item, voucherInfo);
+                    entity.FCURRENCYID = "PRE001";
+                    entity.FEXCHANGERATETYPE = "HLTX01_SYS";
                     amount = item.AMOUNT.Round(2);
-                    isDebit = ruleResult[0].AccFDC == "借方";      // 是否为借方
-
-                    KeyStr = isDebit ? "付" : "收";
-
-                    if (isDebit)
-                    {
-                        entity.FDEBIT = amount.ToString();
-                        DEBITTotal += amount;
+                    entity.FAMOUNTFOR = amount.ToString();
+                    if (item.BalanceDirection=="借方") 
+                    { 
+                        entity.FDEBIT = amount.ToString(); 
+                    } 
+                    else 
+                    { 
+                        entity.FCREDIT = amount.ToString(); 
                     }
-                    else
-                    {
-                        entity.FCREDIT = amount.ToString();
-                        CREDITTotal += amount;
-                    }
-
-                    entity.FAccountID = ruleResult[0].AccountID;
-                    AccFiexItem = ruleResult[0].AccFiexItem;
-                }
-                else
-                {
-                    MessageBox.Show(item.AccType + "没有设置核算规则");
-                    return;
-
+                    Entities?.Add(entity);
+                    RowIndex++;
                 }
 
-                //摘要
-                if (!string.IsNullOrWhiteSpace(item.AccNumber))
-                {
-                    item.AccNumber = "凭证号：" + item.AccNumber;
-                }
-                //如果核算类型已经有了收、付的关键字，就不要在摘要里写收付字样了
-                if (item.AccType.StartsWith("收") || item.AccType.StartsWith("付"))
-                {
-                    KeyStr = string.Empty;
-                }
-                entity.FEXPLANATION = voucherInfo?.Bank?.DimensionName + KeyStr + item.DetailID_FFlex5 + item.DetailID_FFlex6 + item.AccType + item.AccNumber;
-
-                //客户
-                if (AccFiexItem!=null && AccFiexItem.Contains("客户"))
-                {
-                    //如果核算维度有客户维度，判断客户字段是否为空，空值则按零星客户核算
-                    if (string.IsNullOrWhiteSpace(item.DetailID_FFlex6))
-                    {
-                        KeyStr = "零星客户";
-                    }
-                    else
-                    {
-                        KeyStr = item.DetailID_FFlex6;
-                    }
-                    var result = AccDimension
-                    .Where(b => b.DimensionType == "客户" && b.DimensionName == KeyStr)
-                    .Select(b => new
-                    {
-                        b.DimensionNumber
-                    }).ToList();
-
-                    if (result.Any()) { entity.FDetailID_FFlex6 = result[0].DimensionNumber; }
-                }
-
-                //部门
-                if (AccFiexItem != null && AccFiexItem.Contains("部门"))
-                {
-                    //如果核算维度有部门维度，判断部门字段是否为空，空值则按归集客户核算
-                    if (string.IsNullOrWhiteSpace(item.DetailID_FFlex5))
-                    {
-                        KeyStr = "归集部门";
-                    }
-                    else
-                    {
-                        KeyStr = item.DetailID_FFlex5;
-                    }
-                    var result = AccDimension
-                    .Where(b => b.DimensionType == "部门" && b.DimensionName == KeyStr)
-                    .Select(b => new
-                    {
-                        b.DimensionNumber
-                    }).ToList();
-
-                    if (result.Any()) { entity.FDetailID_FFlex5 = result[0].DimensionNumber; }
-                }
-
-                //供应商
-                if (AccFiexItem != null && AccFiexItem.Contains("供应商"))
-                {
-
-                    if (string.IsNullOrWhiteSpace(item.DetailID_FFlex4))
-                    {
-                        KeyStr = "零星供应商";
-                    }
-                    else
-                    {
-                        KeyStr = item.DetailID_FFlex4;
-                    }
-                    var result = AccDimension
-                    .Where(b => b.DimensionType == "供应商" && b.DimensionName == KeyStr)
-                    .Select(b => new
-                    {
-                        b.DimensionNumber
-                    }).ToList();
-
-                    if (result.Any()) { entity.FDetailID_FFlex4 = result[0].DimensionNumber; }
-                }
-
-                //费用项目
-                if (AccFiexItem!= null && AccFiexItem.Contains("费用项目"))
-                {
-                    KeyStr = item.DetailID_FFlex9 ?? string.Empty;
-                    var result = AccDimension
-                    .Where(b => b.DimensionType == "费用项目" && b.DimensionName == KeyStr)
-                    .Select(b => new
-                    {
-                        b.DimensionNumber
-                    }).ToList();
-
-                    if (result.Any()) { entity.FDetailID_FFLEX9 = result[0].DimensionNumber; }
-                }
-
-                entity.FCURRENCYID = "PRE001";
-                entity.FEXCHANGERATETYPE = "HLTX01_SYS";
-
-                //原币金额
-
-                entity.FAMOUNTFOR = item.AMOUNT.Round(2).ToString();
-
-                Entities?.Add(entity);
-
-                RowIndex++;
+                IsFinished = true;
             }
-
-            Entity TotalEntity = new Entity();
-            TotalEntity.FEntity = RowIndex.ToString();
-            TotalEntity.FEXPLANATION = voucherInfo?.Bank?.DimensionName + voucherInfo?.Date.ToString("yyyy/MM/dd") + "收支明细";
-            TotalEntity.FAccountID = voucherInfo?.Bank?.AccID;
-
-            //判断现金账户核算维度
-            if(voucherInfo?.Bank?.BankDimension != null)
+            catch(Exception ex)
             {
-                if (voucherInfo.Bank.BankDimension.Contains("银行账号")) { TotalEntity.FDetailID_FF100009 = voucherInfo.Bank.DimensionNumber; }
-                if (voucherInfo.Bank.BankDimension.Contains("客户")) { TotalEntity.FDetailID_FFlex6 = voucherInfo.Bank.DimensionNumber; }
-                if (voucherInfo.Bank.BankDimension.Contains("部门")) { TotalEntity.FDetailID_FFlex5 = voucherInfo.Bank.DimensionNumber; }
-                if (voucherInfo.Bank.BankDimension.Contains("供应商")) { TotalEntity.FDetailID_FFlex4 = voucherInfo.Bank.DimensionNumber; }
-                if (voucherInfo.Bank.BankDimension.Contains("费用项目")) { TotalEntity.FDetailID_FFLEX9 = voucherInfo.Bank.DimensionNumber; }
+                MessageBox.Show(ex.Message);
             }
-
-            TotalEntity.FCURRENCYID = "PRE001";
-            TotalEntity.FEXCHANGERATETYPE = "HLTX01_SYS";
-            TotalEntity.FAMOUNTFOR = Math.Abs(DEBITTotal - CREDITTotal).ToString();
-            if (DEBITTotal > CREDITTotal)
-            {
-                TotalEntity.FCREDIT = TotalEntity.FAMOUNTFOR;
-            }
-            else
-            {
-                TotalEntity.FDEBIT = TotalEntity.FAMOUNTFOR;
-            }
-            Entities?.Add(TotalEntity);
-
-            //验证内部往来
-            VerifyInterior(billInfo,voucherInfo);
-
-            IsFinished = true;
-            IsHeader = true;
 
 
         }
+
+        //把银行信息添加到凭证里
+        private void AddBankBillInfo(ObservableCollection<BillInfo> billInfo, VoucherInfo voucherInfo)
+        {
+            BillInfo bankinfo = new BillInfo();
+            bankinfo.IsBankBillInfo = true;
+            double DEBITTotal, CREDITTotal;
+            DEBITTotal = billInfo.Where(b => b.BalanceDirection == "借方").Sum(b => b.AMOUNT);
+            CREDITTotal = billInfo.Where(b => b.BalanceDirection == "贷方").Sum(b => b.AMOUNT);
+            bankinfo.AMOUNT = Math.Abs(DEBITTotal - CREDITTotal);
+            //如果借贷方余额相等，就没有银行信息
+            if (bankinfo.AMOUNT == 0) return;
+            bankinfo.BalanceDirection = DEBITTotal < CREDITTotal ? "借方" : "贷方";
+            //资金调拨判断
+            if (billInfo.Count == 1 && billInfo.First().IsBankBillInfo == true) bankinfo.BillWayNumber = "资金调拨";
+
+            if (voucherInfo.Bank != null)
+            {
+                bankinfo.AccType = voucherInfo.Bank.AccName;
+                bankinfo.DetailID_FFlex6 = voucherInfo.Bank.DimensionName;
+                bankinfo.DetailID_FFlex5 = voucherInfo.Bank.Branch;
+                bankinfo.DetailID_FFlex4 = voucherInfo.Bank.DimensionName;
+                bankinfo.DetailID_FF100009 = voucherInfo.Bank.DimensionName;
+            }
+
+            billInfo.Add(bankinfo);
+        }
+
+        private void WriteHeader(Entity entity,VoucherInfo voucherInfo)
+        {
+            if (IsHeader)
+            {
+                entity.GL_VOUCHER = (10000 + VoucherIndex).ToString();
+                entity.FAccountBookID = voucherInfo?.Book?.Id;
+                entity.FDate = voucherInfo?.Date.ToString("yyyy/MM/dd");
+                entity.FYEAR = voucherInfo?.Date.Year.ToString();
+                entity.FPERIOD = voucherInfo?.Date.Month.ToString();
+                entity.FVOUCHERGROUPID = voucherInfo?.Voucher?.Id;
+                entity.FVOUCHERGROUPNO = VoucherIndex.ToString();
+                entity.FACCBOOKORGID = voucherInfo?.Book?.Id;
+            }
+            IsHeader = false;
+        }
+
+        private string? GetFEXPLANATION(BillInfo item,VoucherInfo voucherInfo)
+        {
+            if (!string.IsNullOrWhiteSpace(item.FEXPLANATION))
+            {
+                return item.FEXPLANATION;
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.AccNumber))
+            {
+                item.AccNumber = "凭证号：" + item.AccNumber;
+            }
+            else
+            {
+                item.AccNumber = "金额："+item.AMOUNT;
+            }
+            //如果核算类型已经有了收、付的关键字，就不要在摘要里写收付字样了
+
+            if (item.IsBankBillInfo)
+            {
+                KeyStr = item.BalanceDirection == "借方" ? "收" : "付";
+            }
+            else
+            {
+                KeyStr = item.BalanceDirection == "借方" ? "付" : "收";
+            }
+            
+            if (!string.IsNullOrEmpty(item.AccType) &&
+                (item.AccType.StartsWith("收") || item.AccType.StartsWith("付")))
+            {
+                KeyStr = string.Empty;
+            }
+            
+            if(item.BillWayNumber=="资金调拨")
+            {
+                return KeyStr = voucherInfo?.Bank?.DimensionName+"资金调拨";
+            }
+            if(item.IsBankBillInfo)
+            {
+                return KeyStr = voucherInfo?.Bank?.DimensionName + KeyStr +"款汇总," + item.AccNumber;
+            }
+            else
+            {
+                return KeyStr = voucherInfo?.Bank?.DimensionName + KeyStr + item.DetailID_FFlex5 + item.DetailID_FFlex6 + item.AccType + item.AccNumber;
+            }
+        }
+
+        private string? GetAccID(BillInfo item,VoucherInfo info)
+        {
+            if (dicRules.TryGetValue((info.Book?.Name,item.AccType), out var r))
+            {
+                AccFiexItem = r.AccFiexItem;
+                return r.AccountID;
+            }
+            else
+            {
+                MessageBox.Show(item.AccType + "没有设置核算规则");
+                return null;
+
+            }
+        }
+
+        private string? GetCustom(BillInfo item, VoucherInfo info)
+        {
+            if (AccFiexItem!.Contains("客户"))
+            {
+                //如果核算维度有客户维度，判断客户字段是否为空，空值则按零星客户核算
+                if (string.IsNullOrWhiteSpace(item.DetailID_FFlex6))
+                {
+                    KeyStr = "零星客户";
+                }
+                else
+                {
+                    KeyStr = item.DetailID_FFlex6;
+                }
+                string key = item.IsBankBillInfo ? "银行账号" : "客户";
+                if (dicDimension.TryGetValue((info.Book?.Name, key, KeyStr), out var c))
+                    return c.DimensionNumber;
+            }
+            return null;
+        }
+
+        private string? GetDepartment(BillInfo item, VoucherInfo info)
+        {
+            //部门
+            if (AccFiexItem!.Contains("部门"))
+            {
+                //如果核算维度有部门维度，判断部门字段是否为空，空值则按归集客户核算
+                if (string.IsNullOrWhiteSpace(item.DetailID_FFlex5))
+                {
+                    KeyStr = "归集部门";
+                }
+                else
+                {
+                    KeyStr = item.DetailID_FFlex5;
+                }
+                if (dicDimension.TryGetValue((info.Book?.Name, "部门", KeyStr), out var d))
+                    return d.DimensionNumber;
+            }
+            return null;
+        }
+
+        private string? GetOrder(BillInfo item, VoucherInfo info)
+        {
+            if (AccFiexItem!.Contains("供应商"))
+            {
+
+                if (string.IsNullOrWhiteSpace(item.DetailID_FFlex4))
+                {
+                    KeyStr = "零星供应商";
+                }
+                else
+                {
+                    KeyStr = item.DetailID_FFlex4;
+                }
+                string key = item.IsBankBillInfo ? "银行账号" : "供应商";
+                if (dicDimension.TryGetValue((info.Book?.Name, key, KeyStr), out var o))
+                    return o.DimensionNumber;
+            }
+            return null;
+        }
+
+        private string? GetExpense(BillInfo item, VoucherInfo info)
+        {
+            if (AccFiexItem!.Contains("费用项目"))
+            {
+                KeyStr = item.DetailID_FFlex9 ?? string.Empty;
+                if (dicDimension.TryGetValue((info.Book?.Name, "费用项目", KeyStr), out var c))
+                    return c.DimensionNumber;
+            }
+            return null;
+        }
+
+        private string? GetBank(BillInfo item, VoucherInfo info)
+        {
+            if (AccFiexItem!.Contains("银行账号"))
+            {
+                KeyStr = item.DetailID_FF100009 ?? string.Empty;
+                if (dicDimension.TryGetValue((info.Book?.Name, "银行账号", KeyStr), out var c))
+                    return c.DimensionNumber;
+            }
+            return null;
+        }
+
 
         //验证内部往来
         private void VerifyInterior(ObservableCollection<BillInfo> billInfo,VoucherInfo voucherInfo)
@@ -415,131 +455,55 @@ namespace KISHelper.Common
             if (string.IsNullOrWhiteSpace(voucherInfo?.Bank?.Branch))
                 return;
 
-            //创建部门核算维度字典
-            var dimDict = AccDimension
-                .Where(d => !string.IsNullOrWhiteSpace(d.Branch) && d.DimensionType == "部门")
-                .ToDictionary(
-                d => d.DimensionName!,
-                d => (d.Branch, d.Interior));
-
             //根据字典匹配往来维度编码，然后筛选部门与银行维度编码不一致的集合并汇总。
-            var summary = billInfo
-                .Where(b => dimDict.TryGetValue(b.DetailID_FFlex5, out var info)  && 
-                        !string.Equals(info.Branch, voucherInfo.Bank.Branch,
-                        StringComparison.OrdinalIgnoreCase))
-                .GroupBy(b => new { b.DetailID_FFlex5, b.BalanceDirection })
-                .Select(g => new BillInfo
+            string? branchInterior = dicDimension.TryGetValue((voucherInfo.Book?.Name,"部门", voucherInfo.Bank.Branch), out var bInfo)
+                      ? bInfo.Interior
+                      : null;
+
+            var summary =
+                from b in billInfo
+                let key = (voucherInfo.Book?.Name, "部门", b.DetailID_FFlex5)
+                where dicDimension.TryGetValue(key, out var rowInfo) &&   // 当前行能查到
+                      branchInterior != null &&                          // 银行分行也能查到
+                      !string.Equals(rowInfo.Interior, branchInterior,   // 两个 Interior 不相等
+                                     StringComparison.OrdinalIgnoreCase)
+                group b by new { b.DetailID_FFlex5, b.BalanceDirection } into g
+                select new BillInfo
                 {
                     AccType = "一般往来",
                     DetailID_FFlex5 = g.Key.DetailID_FFlex5,
                     BalanceDirection = g.Key.BalanceDirection,
-                    AMOUNT = g.Sum(b => b.AMOUNT)
-                });
+                    AMOUNT = g.Sum(x => x.AMOUNT)
+                };
 
             //没有内容即都是一个主体内部的，不需要做往来挂账
             if (!summary.Any())
                 return;
 
+            string wlNumber = DateTime.Now.ToString("yyyyMMddHHmmss");
 
             foreach(var item in summary)
             {
                 for(int i=0; i<=1; i++)
                 {
-                    RowIndex++;
-                    Entity entity = new Entity();
-                    entity.FEntity = RowIndex.ToString();
-
-                    var ruleResult = AccRules
-                        .Where(b => b.AccName == item.AccType)
-                        .Select(b => new
-                        {
-                            b.AccountID,
-                            b.AccFDC,
-                            b.AccFiexItem
-                        }).ToList();
-                    if (ruleResult.Any())
+                    BillInfo bill = new BillInfo();
+                    bill.AccNumber = wlNumber;
+                    bill.AccType = item.AccType;
+                    bill.DetailID_FFlex5 = i == 0 ? item.DetailID_FFlex5 : voucherInfo.Bank.Branch;
+                    if (dicDimension.TryGetValue((voucherInfo.Book?.Name, "部门", bill.DetailID_FFlex5), out var Int))
                     {
-                        entity.FAccountID = ruleResult[0].AccountID;
-                        AccFiexItem = ruleResult[0].AccFiexItem;
+                        bill.DetailID_FFlex6 = Int.Interior;
+                    }
+                    if (i == 0)
+                    {
+                        bill.BalanceDirection = item.BalanceDirection;
                     }
                     else
                     {
-                        MessageBox.Show(item.AccType + "没有设置核算规则");
-                        return;
+                        bill.BalanceDirection = item.BalanceDirection == "借方" ? "贷方" : "借方";
                     }
-                    isDebit = (item.BalanceDirection == "贷方" && i == 0)||(item.BalanceDirection == "借方" && i == 1);
-
-                    if (isDebit)
-                    {
-                        entity.FDEBIT = item.AMOUNT.Round(2).ToString();
-                        KeyStr = i==0 ?"收": "付";
-                    }
-                    else
-                    {
-                        entity.FCREDIT = item.AMOUNT.Round(2).ToString();
-                        KeyStr = i == 0 ? "付" : "收";
-                    }
-
-
-                    if (item.AccType.StartsWith("收") || item.AccType.StartsWith("付"))
-                    {
-                        KeyStr = string.Empty;
-                    }
-                    entity.FEXPLANATION = voucherInfo.Bank.DimensionName + KeyStr + item.DetailID_FFlex5 + "往来款";
-
-
-                    if (AccFiexItem.Contains("客户") &&i ==0 )
-                    {
-                        KeyStr = item.DetailID_FFlex5;
-                    }
-                    else
-                    {
-                        KeyStr = voucherInfo.Bank.Branch;
-                    }
-
-                    dimDict.TryGetValue(KeyStr, out var info);
-                    entity.FDetailID_FFlex6 = info.Interior;
-
-                    if (AccFiexItem.Contains("部门"))
-                    {
-                        //如果核算维度有部门维度，判断部门字段是否为空，空值则按归集客户核算
-                        if (string.IsNullOrWhiteSpace(item.DetailID_FFlex5))
-                        {
-                            MessageBox.Show("没有指定部门");
-                            return;
-                        }
-
-                        if (i == 0) 
-                        { 
-                            KeyStr = item.DetailID_FFlex5; 
-                        } 
-                        else
-                        {
-                            KeyStr = voucherInfo.Bank.Branch;
-                        }
-
-                        
-                            
-                        
-                        var result = AccDimension
-                        .Where(b => b.DimensionType == "部门" && b.DimensionName == KeyStr)
-                        .Select(b => new
-                        {
-                            b.DimensionNumber
-                        }).ToList();
-
-                        entity.FDetailID_FFlex5 = result[0].DimensionNumber; 
-
-                    }
-
-                    entity.FCURRENCYID = "PRE001";
-                    entity.FEXCHANGERATETYPE = "HLTX01_SYS";
-
-                    //原币金额
-
-                    entity.FAMOUNTFOR = item.AMOUNT.Round(2).ToString();
-                    Entities?.Add(entity);
-
+                    bill.AMOUNT = item.AMOUNT;
+                    billInfo.Add(bill);
                 }
                 
             }
@@ -550,12 +514,14 @@ namespace KISHelper.Common
 
         private bool IsHeader =true;
 
-        private bool isDebit;
-
         private double amount;
 
-        private string KeyStr;
+        private string? KeyStr;
 
-        private string AccFiexItem;
+        private string? AccFiexItem;
+
+        private Dictionary<(string? Affiliated, string? DimensionType, string? DimensionName), AccDimension> dicDimension;
+
+        private Dictionary<(string? Affiliated, string? AccName), AccRule> dicRules;
     }
 }

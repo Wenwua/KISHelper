@@ -29,9 +29,38 @@ namespace KISHelper.ViewModels.Dialog
                 if (accRule != null)
                 {
                     accRule.PropertyChanged += OnAccRulePropertyChanged;
+                    SyncAffiliatedWithSelectedBook();
                     UpdateAllowDefaultDetailID_FFlex5();
                 }
             } 
+        }
+        private void SyncAffiliatedWithSelectedBook()
+        {
+            if (AccRule != null)
+                AccRule.Affiliated = AccBookSelected?.Name;
+        }
+
+        private ObservableCollection<AccountBook>? accountBooks;
+        public ObservableCollection<AccountBook>? AccountBooks
+        {
+            get => accountBooks;
+            set => SetField(ref accountBooks, value);
+        }
+
+        private AccountBook? accBookSelected;
+        public AccountBook? AccBookSelected
+        {
+            get => accBookSelected;
+            set 
+            { 
+                if(SetField(ref accBookSelected, value))
+                {
+                    var list = accDimension.Where(a => a.Affiliated == value?.Name).ToList();
+                    DpmDimension = list == null ? null : new ObservableCollection<AccDimension>(list);
+                    SyncAffiliatedWithSelectedBook();
+                }
+                
+            }
         }
 
         private ObservableCollection<AccDimension>? accDimension;
@@ -40,6 +69,14 @@ namespace KISHelper.ViewModels.Dialog
             get => accDimension;
             set => SetField(ref accDimension, value);
         }
+
+        private ObservableCollection<AccDimension>? dpmDimension=new();
+        public ObservableCollection<AccDimension>? DpmDimension
+        {
+            get => dpmDimension;
+            set => SetField(ref dpmDimension, value);
+        }
+
         private bool allowDefaultDetailID_FFlex5;
         public bool AllowDefaultDetailID_FFlex5
         {
@@ -65,14 +102,13 @@ namespace KISHelper.ViewModels.Dialog
             var _accDimension = new ObservableCollection<AccDimension>(
                 _repository.LoadData<AccDimension>("AccDimension"));
             var result = _accDimension.Where(a => a.DimensionType == "部门").ToList();
-
-            if (result.Any())
-            {
-                AccDimension = new ObservableCollection<AccDimension>(result);
-            }
-
+            AccDimension = new ObservableCollection<AccDimension>(result);
+            var _accbooks = new ObservableCollection<AccountBook>(
+                _repository.LoadData<AccountBook>("AccountBooks"));
+            
+            accountBooks = new ObservableCollection<AccountBook>(_accbooks);
+            AccBookSelected = AccountBooks?.FirstOrDefault();
             AccRule = new AccRule();
-
 
         }
 

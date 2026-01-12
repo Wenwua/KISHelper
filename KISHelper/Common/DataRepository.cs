@@ -14,9 +14,17 @@ namespace KISHelper.Common
         private readonly string _filePath;
         private readonly JsonSerializerOptions _options;
 
-        public DataRepository()
+        public DataRepository(string FilePath ="")
         {
-            _filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.json");
+            if (string.IsNullOrWhiteSpace(FilePath))
+            {
+                _filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data.json");
+            }
+            else
+            {
+                _filePath = FilePath;
+            }
+            
 
             _options = new JsonSerializerOptions
             {
@@ -29,7 +37,7 @@ namespace KISHelper.Common
         /// <summary>
         /// 保存任意类型的数据列表
         /// </summary>
-        /// <param name="key">数据标识（如"AccountBooks"）</param>
+        /// <param name="key">数据标识</param>
         /// <param name="data">数据列表</param>
         public void SaveData<T>(string key, List<T> data)
         {

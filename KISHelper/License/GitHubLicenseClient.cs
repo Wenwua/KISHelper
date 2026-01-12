@@ -1,4 +1,5 @@
-﻿using KISHelper.Common;
+﻿using Common;
+using KISHelper.Common;
 using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -16,20 +18,13 @@ using System.Windows;
 namespace KISHelper.License
 {
     #region 验证相关
-    public class LocalKey
+    public class LocalLicense
     {
-        public string Key { get; set; } = "";
+        public string Key { get; set; } = "";   // 加密后的最新钥匙
+        public string Code { get; set; } = "";   // 远程 code（明文即可）
     }
-    public class LocalCode
-    {
-        public string Code { get; set; } = "";
-    }
-
-    public class RemoteCode
-    {
-        public string Code { get; set; } = "";
-    }
-
+    public record RemoteKey(string Key, DateTime Expire, string Status);
+    public record KeyConfig(string Code, List<RemoteKey> Keys);
     #endregion
 
     #region 更新相关
@@ -66,63 +61,147 @@ namespace KISHelper.License
         private const string Config = "KISHelperConfig";
         private const string REPO = "KISHelper";
         private const string FilePath = "license.json";
-        private const string ASSET = "KISHelper-Release.zip";
+
+        private static readonly string LocalPath =
+        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "license.json");
+
+        private const string LocalPwd = "DK00078"; // 用来加密钥匙
 
         /// <summary>
-        /// 主入口：验证本地 Key 能否拿到远程 Code，并比对
+        /// 程序启动调用一次：网络通就同步远程，不通就纯本地
+        /// </summary>
+        public static async Task<bool> InitializeAsync()
+        {
+            try
+            {
+                await RefreshIfNeededAsync();
+            }
+            catch
+            {
+                // 网络失败就忽略，靠本地文件继续跑
+            }
+            return await CheckAsync(); // 只要本地文件合法即可
+        }
+
+
+        #region 加密过程
+        /// <summary>
+        /// 纯本地验证，不联网
         /// </summary>
         public static async Task<bool> CheckAsync()
         {
             try
             {
-                string key = LoadLocalKey();
-                string localcode = LoadLocalCode();
-                if (string.IsNullOrWhiteSpace(key) && string.IsNullOrWhiteSpace(localcode))
-                    return false;
+                var local = LoadLocal();
+                string key = DecryptKey(local.Key);
+                if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(local.Code))
+                    return false; // 本地无效
 
-                string code = await DownloadCodeAsync(key);
-                return code == localcode;
+                string remoteJson = await DownloadCodeAsync(key);
+                var remote = JsonSerializer.Deserialize<KeyConfig>(remoteJson)!;
+                return remote.Code == local.Code;
             }
             catch
             {
+                // 网络或其他异常也视为不通过
                 return false;
             }
         }
-
-        private static string LocalPath => Path.Combine(
-            AppDomain.CurrentDomain.BaseDirectory,
-            "license.json");
-
-        private static string LoadLocalKey()
+        /// <summary>
+        /// 定时器可调用：钥匙快过期就后台刷新
+        /// </summary>
+        public static async Task RefreshIfNeededAsync()
         {
-            if (!File.Exists(LocalPath)) return "";
-            var json = File.ReadAllText(LocalPath);
-            return JsonSerializer.Deserialize<LocalKey>(json)?.Key ?? "";
+            var remote = await DownloadRemoteConfigAsync();
+            if (remote == null) return; // 网络失败就放弃
+
+            var local = LoadLocal();
+            bool needUpdate = false;
+
+            if (remote.Code != local.Code)
+            {
+                local.Code = remote.Code;
+                needUpdate = true;
+            }
+
+            // 钥匙升级 or 快过期（<3 天）
+            var now = DateTime.UtcNow;
+            var best = remote.Keys
+                             .Where(k => k.Status == "active" && k.Expire > now)
+                             .OrderByDescending(k => k.Expire)
+                             .FirstOrDefault();
+
+            if (best != null &&
+                (local.Key == "" ||
+                 best.Expire < now.AddDays(3)))
+            {
+                local.Key = EncryptKey(best.Key);
+                needUpdate = true;
+            }
+
+            if (needUpdate) SaveLocal(local);
         }
-        private static string LoadLocalCode()
+        private static LocalLicense LoadLocal()
         {
-            if (!File.Exists(LocalPath)) return "";
+            if (!File.Exists(LocalPath))
+                return new LocalLicense();
             var json = File.ReadAllText(LocalPath);
-            return JsonSerializer.Deserialize<LocalCode>(json)?.Code ?? "";
+            return JsonSerializer.Deserialize<LocalLicense>(json)!;
+        }
+
+        private static void SaveLocal(LocalLicense lic)
+        {
+            File.WriteAllText(LocalPath,
+                JsonSerializer.Serialize(lic, new JsonSerializerOptions { WriteIndented = true }));
+        }
+
+        // 加密/解密钥匙
+        private static string EncryptKey(string plainKey) => StaticCrypto.Encrypt(plainKey, LocalPwd);
+        private static string DecryptKey(string enc)
+        {
+            try
+            {
+                var key = StaticCrypto.Decrypt(enc, LocalPwd);
+                return key;
+            }
+            catch (Exception ex) when (ex is FormatException or CryptographicException or JsonException)
+            {
+                return ""; // 上层检测到空即认为不合法
+            }
+        }
+
+
+        // 拉远程 JSON
+        private static async Task<KeyConfig?> DownloadRemoteConfigAsync()
+        {
+            try
+            {
+                var local = LoadLocal();
+                string key = DecryptKey(local.Key);
+                string json = await DownloadCodeAsync(key);
+                return JsonSerializer.Deserialize<KeyConfig>(json);
+            }
+            catch { return null; }
         }
 
         private static async Task<string> DownloadCodeAsync(string token)
         {
             string api = $"https://api.github.com/repos/{Owner}/{Config}/contents/{FilePath}";
-
             _hc.DefaultRequestHeaders.UserAgent.ParseAdd("KISHelper/1.0");
-            _hc.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Token", token);
+            if (!string.IsNullOrWhiteSpace(token))
+                _hc.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Token", token);
 
             var resp = await _hc.GetStringAsync(api);
-            var doc = JsonDocument.Parse(resp);
-            string b64 = doc.RootElement.GetProperty("content").GetString();
+            using var doc = JsonDocument.Parse(resp);
+            string b64 = doc.RootElement.GetProperty("content").GetString()!;
             byte[] data = Convert.FromBase64String(b64);
-            string json = Encoding.UTF8.GetString(data);
-
-            return JsonSerializer.Deserialize<RemoteCode>(json)?.Code ?? "";
+            return Encoding.UTF8.GetString(data);
         }
 
+        #endregion
+
+        #region 更新过程
         public static async Task<UpdateInfo> CheckUpdateAsync()
         {
             try
@@ -181,5 +260,7 @@ namespace KISHelper.License
                 Application.Current.Shutdown(); // 立即退出主程序，让升级器接管
             }
         }
+
+        #endregion
     }
 }

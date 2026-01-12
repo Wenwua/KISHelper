@@ -9,6 +9,12 @@
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterOwner">
     <StackPanel Margin="15">
+        <TextBlock Text="所属组织:"
+           Margin="0,0,0,5"/>
+        <ComboBox ItemsSource="{Binding AccountBooks}" DisplayMemberPath="Name" 
+                 MinWidth="250"
+                 Margin="0,0,0,15"
+                 SelectedItem="{Binding AccBookSelected}"/>
         <TextBlock Text="维度类型:"
 		           Margin="0,0,0,5"/>
         <ComboBox Text="{Binding AccDimension.DimensionType}"
@@ -30,24 +36,19 @@
         <TextBox Text="{Binding AccDimension.DimensionNumber}"
 		         MinWidth="250"
 		         Margin="0,0,0,15"/>
-        <TextBlock Text="银行科目:"
+        <TextBlock Text="核算规则:"
 		           Margin="0,0,0,5"/>
-        <TextBox Text="{Binding AccDimension.AccID}"
+        <ComboBox ItemsSource="{Binding AccRules}" DisplayMemberPath="AccName" 
 		         MinWidth="250"
 		         Margin="0,0,0,15"
-		         IsEnabled="{Binding IsAccID}"/>
-        <TextBlock Text="银行维度:"
-		           Margin="0,0,0,5"/>
-        <TextBox Text="{Binding AccDimension.BankDimension}"
-		         MinWidth="250"
-		         Margin="0,0,0,15"
-		         IsEnabled="{Binding IsAccID}"/>
+                 SelectedItem="{Binding AccRuleSelected}"
+		         IsEnabled="{Binding IsAccName}"/>
         <TextBlock Text="所属部门:"
 	           Margin="0,0,0,5"/>
         <ComboBox ItemsSource="{Binding DpmDimension}" MinWidth="250" Margin="0,0,0,10" DisplayMemberPath="DimensionName" 
-          SelectedItem="{Binding DpmSelected}" IsEnabled="{Binding IsBanch}"/>
+          SelectedItem="{Binding DpmSelected}" IsEnabled="{Binding IsAccName}"/>
         <StackPanel Orientation="Horizontal" Margin="0,0,0,5" >
-            <TextBlock Text="往来编码:"/>
+            <TextBlock Text="往来主体:"/>
             <materialDesign:PopupBox Margin="5,0">
                 <materialDesign:PopupBox.ToggleContent>
                     <materialDesign:PackIcon Width="15"
@@ -63,10 +64,11 @@
                 </materialDesign:PopupBox.PopupContent>
             </materialDesign:PopupBox>
         </StackPanel>
-        <TextBox Text="{Binding AccDimension.Interior}"
-		         MinWidth="250"
-		         Margin="0,0,0,15"
-		         IsEnabled="{Binding IsInterior}"/>
+        <ComboBox ItemsSource="{Binding CustomDimension}" DisplayMemberPath="DimensionName" 
+                  SelectedItem="{Binding InteriorSelected}" 
+		          MinWidth="250"
+		          Margin="0,0,0,15"
+		          IsEnabled="{Binding IsInterior}"/>
         <StackPanel Orientation="Horizontal"
 		            HorizontalAlignment="Right">
             <Button Content="确定"

@@ -21,8 +21,6 @@ namespace KISHelper
 
             var navigator = NavigationService.Instance;
 
-            bool isdo;
-
             // 注册所有页面
             navigator.Register<HomeViewModel>("Home");
             navigator.Register<SettingsViewModel>("Settings");

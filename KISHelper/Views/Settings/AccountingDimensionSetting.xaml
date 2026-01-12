@@ -26,13 +26,13 @@
                           GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}"
                           SelectedItem="{Binding SelectedItem}" MinRowHeight="30">
                     <DataGrid.Columns>
+                        <DataGridTextColumn Header="所属组织" Binding="{Binding Affiliated, UpdateSourceTrigger=LostFocus}" Width="*"/>
                         <DataGridTextColumn Header="维度类型" Binding="{Binding DimensionType, UpdateSourceTrigger=LostFocus}" Width="*"/>
                         <DataGridTextColumn Header="维度名称" Binding="{Binding DimensionName, UpdateSourceTrigger=LostFocus}" Width="*"/>
                         <DataGridTextColumn Header="维度编码" Binding="{Binding DimensionNumber, UpdateSourceTrigger=LostFocus}" Width="*"/>
-                        <DataGridTextColumn Header="银行科目" Binding="{Binding AccID, UpdateSourceTrigger=LostFocus}" Width="*"/>
-                        <DataGridTextColumn Header="银行维度" Binding="{Binding BankDimension, UpdateSourceTrigger=LostFocus}" Width="*"/>
+                        <DataGridTextColumn Header="核算规则" Binding="{Binding AccName, UpdateSourceTrigger=LostFocus}" Width="*"/>
                         <DataGridTextColumn Header="所属部门" Binding="{Binding Branch, UpdateSourceTrigger=LostFocus}" Width="*"/>
-                        <DataGridTextColumn Header="往来编码" Binding="{Binding Interior, UpdateSourceTrigger=LostFocus}" Width="*"/>
+                        <DataGridTextColumn Header="往来主体" Binding="{Binding Interior, UpdateSourceTrigger=LostFocus}" Width="*"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

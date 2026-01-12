@@ -26,6 +26,7 @@
                   GridLinesVisibility="None" CellStyle="{StaticResource DataGridCellStyle}" RowStyle="{StaticResource DataGridRowStyle}"
                           SelectedItem="{Binding SelectedItem}" MinRowHeight="30">
                     <DataGrid.Columns>
+                        <DataGridTextColumn Header="所属组织" Binding="{Binding Affiliated, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
                         <DataGridTextColumn Header="核算项目" Binding="{Binding AccName, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
                         <DataGridTextColumn Header="科目编码" Binding="{Binding AccountID, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>
                         <DataGridTextColumn Header="余额方向" Binding="{Binding AccFDC, UpdateSourceTrigger=LostFocus}" Width="*" ElementStyle="{StaticResource TextColumnStyle}"/>

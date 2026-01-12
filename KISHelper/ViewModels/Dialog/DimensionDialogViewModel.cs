@@ -27,25 +27,60 @@ namespace KISHelper.ViewModels.Dialog
                     OnDimensionPropertyChanged(accDimension,new PropertyChangedEventArgs(nameof(AccDimension.DimensionType)));
                     if (DpmDimension != null)
                     {
-                        dpmSelected = DpmDimension.FirstOrDefault(a => a.DimensionName == value.Branch);
+                        dpmSelected = DpmDimension.FirstOrDefault(a => a.DimensionName == value?.Branch);
+                    }
+                    if (CustomDimension != null)
+                    {
+                        interiorSelected=CustomDimension.FirstOrDefault(a => a.DimensionName == value?.Interior);
+                    }
+                    if (AccountBooks != null)
+                    {
+                        AccBookSelected = AccountBooks.FirstOrDefault(a => a.Name == value?.Affiliated);
                     }
                     
                 }
             }
         }
         //如果是银行类型，就需要给银行设置核算科目（根据卡号判断是现金还是银行存款还是其他货币资金）
-        public bool IsAccID => AccDimension?.DimensionType == "银行账号";
-
-        public bool IsBanch => AccDimension?.DimensionType is "银行账号" or "部门";
+        public bool IsAccName => AccDimension?.DimensionType == "银行账号";
 
         //如果是银行或部门，设置内部往来编码
         public bool IsInterior => AccDimension?.DimensionType == "部门";
+
+        private ObservableCollection<AccRule>? accRules;
+        public ObservableCollection<AccRule>? AccRules
+        {
+            get => accRules;
+            set => SetField(ref accRules, value);
+        }
 
         private ObservableCollection<AccDimension>? dpmDimension;
         public ObservableCollection<AccDimension>? DpmDimension
         {
             get => dpmDimension;
             set => SetField(ref dpmDimension, value);
+        }
+
+        private ObservableCollection<AccDimension>? customDimension;
+        public ObservableCollection<AccDimension>? CustomDimension
+        {
+            get => customDimension;
+            set => SetField(ref customDimension, value);
+        }
+
+        private AccRule? accRuleSelected;
+        public AccRule? AccRuleSelected
+        {
+            get => accRuleSelected;
+            set
+            {
+                SetField(ref accRuleSelected, value);
+                if (accDimension != null)
+                {
+                    accDimension.AccName = value?.AccName;
+                }
+
+            }
         }
 
         private AccDimension? dpmSelected;
@@ -60,6 +95,41 @@ namespace KISHelper.ViewModels.Dialog
                     accDimension.Branch = value?.DimensionName;
                 }
                 
+            }
+        }
+
+        private AccDimension? interiorSelected;
+        public AccDimension? InteriorSelected
+        {
+            get => interiorSelected;
+            set
+            {
+                SetField(ref interiorSelected, value);
+                if (accDimension != null)
+                {
+                    accDimension.Interior = value?.DimensionName;
+                }
+
+            }
+        }
+
+        private ObservableCollection<AccountBook>? accountBooks;
+        public ObservableCollection<AccountBook>? AccountBooks
+        {
+            get => accountBooks;
+            set => SetField(ref accountBooks, value);
+        }
+
+        private AccountBook? accBookSelected;
+        public AccountBook? AccBookSelected
+        {
+            get => accBookSelected;
+            set
+            {
+                SetField(ref accBookSelected, value);
+                if (accDimension != null)
+                    accDimension.Affiliated = value?.Name;
+
             }
         }
 
@@ -87,6 +157,19 @@ namespace KISHelper.ViewModels.Dialog
             var filteredList = tmpDimension.Where(d => d.DimensionType == "部门").ToList();
 
             DpmDimension = new ObservableCollection<AccDimension>(filteredList);
+
+            filteredList = tmpDimension.Where(d => d.DimensionType == "客户").ToList();
+
+            CustomDimension = new ObservableCollection<AccDimension>(filteredList);
+
+            AccRules = new ObservableCollection<AccRule>(
+                _repository.LoadData<AccRule>("AccRules"));
+
+            var _accbooks = new ObservableCollection<AccountBook>(
+                _repository.LoadData<AccountBook>("AccountBooks"));
+
+            accountBooks = new ObservableCollection<AccountBook>(_accbooks);
+
         }
 
         #region 事件判断
@@ -94,7 +177,7 @@ namespace KISHelper.ViewModels.Dialog
         {
             if (e.PropertyName == nameof(AccDimension.DimensionType))
             {
-                OnPropertyChanged(nameof(IsAccID));
+                OnPropertyChanged(nameof(IsAccName));
                 OnPropertyChanged(nameof(IsInterior));
             }
         }
@@ -130,6 +213,11 @@ namespace KISHelper.ViewModels.Dialog
             if (string.IsNullOrWhiteSpace(AccDimension.DimensionNumber))
             {
                 MessageBox.Show("维度编码不能为空！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(AccDimension.AccName)&&AccDimension.DimensionType=="银行账号")
+            {
+                MessageBox.Show("银行账号需要设置核算规则！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
             return true;

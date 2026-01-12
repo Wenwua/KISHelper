@@ -6,6 +6,9 @@
         mc:Ignorable="d"
         Title="编辑" SizeToContent="WidthAndHeight" WindowStartupLocation="CenterOwner">
     <StackPanel Margin="15">
+        <TextBlock Text="所属组织:" Margin="0,0,0,5"/>
+        <ComboBox ItemsSource="{Binding AccountBooks}" DisplayMemberPath="Name" SelectedItem="{Binding AccBookSelected}"
+          MinWidth="250" Margin="0,0,0,15"/>
         <TextBlock Text="核算类型:" Margin="0,0,0,5"/>
         <TextBox  Text="{Binding AccRule.AccName}" MinWidth="250" Margin="0,0,0,10"/>
 
@@ -21,7 +24,7 @@
         <TextBlock Text="核算维度:" Margin="0,0,0,5"/>
         <TextBox x:Name="FiexItemBox" Text="{Binding AccRule.AccFiexItem}" MinWidth="250" Margin="0,0,0,15"/>
         <TextBlock Text="默认部门:" Margin="0,0,0,5"/>
-        <ComboBox ItemsSource="{Binding AccDimension}" DisplayMemberPath="DimensionName" SelectedValuePath="DimensionName" SelectedValue="{Binding AccRule.DefaultDetailID_FFlex5}" 
+        <ComboBox ItemsSource="{Binding DpmDimension}" DisplayMemberPath="DimensionName" SelectedValuePath="DimensionName" SelectedValue="{Binding AccRule.DefaultDetailID_FFlex5}" 
                   MinWidth="250" Margin="0,0,0,15" IsEnabled="{Binding AllowDefaultDetailID_FFlex5}"/>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

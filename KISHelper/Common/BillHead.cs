@@ -46,14 +46,23 @@ namespace KISHelper.Common
 
     public class AccRule : ViewModelBase
     {
+        private string? affiliated;
         private string? accName;
         private string? accountID;
         private string? accFDC;
         private string? accFiexItem;
         private string? defaultDetailID_FFlex5;
 
+        //所属组织
+        [ExcelColumn("所属组织", Order = 1)]
+        public string? Affiliated
+        {
+            get => affiliated;
+            set => SetField(ref affiliated, value);
+        }
+
         //名称
-        [ExcelColumn("名称", Order = 1)]
+        [ExcelColumn("核算项目", Order = 2)]
         public string? AccName
         {
             get => accName;
@@ -61,7 +70,7 @@ namespace KISHelper.Common
         }
 
         //科目
-        [ExcelColumn("科目", Order = 2)]
+        [ExcelColumn("科目编码", Order = 3)]
         public string? AccountID
         {
             get => accountID;
@@ -69,7 +78,7 @@ namespace KISHelper.Common
         }
 
         //余额方向
-        [ExcelColumn("余额方向", Order = 3)]
+        [ExcelColumn("余额方向", Order = 4)]
         public string? AccFDC
         {
             get => accFDC;
@@ -77,7 +86,7 @@ namespace KISHelper.Common
         }
 
         //核算维度
-        [ExcelColumn("核算维度", Order = 4)]
+        [ExcelColumn("核算维度", Order = 5)]
         public string? AccFiexItem
         {
             get => accFiexItem;
@@ -85,7 +94,7 @@ namespace KISHelper.Common
         }
 
         //核算维度
-        [ExcelColumn("默认部门", Order = 5)]
+        [ExcelColumn("默认部门", Order = 6)]
         public string? DefaultDetailID_FFlex5
         {
             get => defaultDetailID_FFlex5;
@@ -98,13 +107,21 @@ namespace KISHelper.Common
         private string? dimensionType;
         private string? dimensionName;
         private string? dimensionNumber;
-        private string? accId;
-        private string? bankDimension;
+        private string? accName;
         private string? branch;
         private string? interior;
+        public string? affiliated;
+        
+        //所属组织
+        [ExcelColumn("所属组织", Order = 1)]
+        public string? Affiliated
+        {
+            get => affiliated;
+            set => SetField(ref affiliated, value);
+        }
 
         //维度类型
-        [ExcelColumn("维度类型", Order = 1)]
+        [ExcelColumn("维度类型", Order = 2)]
         public string? DimensionType
         {
             get => dimensionType;
@@ -112,7 +129,7 @@ namespace KISHelper.Common
         }
 
         //维度名称
-        [ExcelColumn("维度名称", Order = 2)]
+        [ExcelColumn("维度名称", Order = 3)]
         public string? DimensionName
         {
             get => dimensionName;
@@ -120,29 +137,20 @@ namespace KISHelper.Common
         }
 
         //维度编码
-        [ExcelColumn("维度编码", Order = 3)]
+        [ExcelColumn("维度编码", Order = 4)]
         public string? DimensionNumber
         {
             get => dimensionNumber;
             set => SetField(ref dimensionNumber, value);
         }
 
-        //核算科目---只有银行账号需要指定现金科目或是银行科目
-        [ExcelColumn("核算科目", Order = 4)]
-        public string? AccID
+        //核算规则目---只有银行账号需要指定核算规则
+        [ExcelColumn("核算规则", Order = 5)]
+        public string? AccName
 
         {
-            get => accId;
-            set => SetField(ref accId, value);
-        }
-
-        //核算维度---只有银行账号需要指定维度
-        [ExcelColumn("银行维度", Order = 5)]
-        public string? BankDimension
-
-        {
-            get => bankDimension;
-            set => SetField(ref bankDimension, value);
+            get => accName;
+            set => SetField(ref accName, value);
         }
 
         //所属部门---平台公司需要将所有维度核算到部门
@@ -155,7 +163,7 @@ namespace KISHelper.Common
         }
 
         //往来科目---当涉及平台公司内部挂账需要指定往来客户
-        [ExcelColumn("往来客户", Order = 7)]
+        [ExcelColumn("往来主体", Order = 7)]
         public string? Interior
 
         {
